@@ -152,6 +152,13 @@ export interface FeedComment {
   updatedAt: Timestamp;
 }
 
+export interface FeedLikeUser {
+  uid: string;
+  name?: string;
+  nickname: string;
+  avatarUrl: string | null;
+}
+
 export interface ActiveSessionState {
   hasActiveSession: boolean;
   session: StudySession | null;

@@ -24,7 +24,11 @@ export function useFeed(groupId: string | null) {
   const toggleLike = useCallback(async (postId: string) => {
     const result = await feedService.toggleLike(postId);
     setPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, likeCount: result.likeCount } : p))
+      prev.map((p) =>
+        p.id === postId
+          ? { ...p, likeCount: result.likeCount, isLikedByMe: result.liked }
+          : p
+      )
     );
     return result;
   }, []);

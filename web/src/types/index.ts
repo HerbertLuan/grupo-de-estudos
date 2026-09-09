@@ -181,6 +181,13 @@ export interface FeedComment {
   updatedAt?: Timestamp | any;
 }
 
+export interface FeedLikeUser {
+  uid: string;
+  name?: string;
+  nickname: string;
+  avatarUrl: string | null;
+}
+
 export type RankingPeriod = 'week' | 'month' | 'season' | 'all' | 'hours';
 
 export interface LeaderboardEntry {

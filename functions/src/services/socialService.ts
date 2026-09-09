@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { HttpsError } from 'firebase-functions/v2/https';
-import { FeedComment, FeedPost, UserProfile } from '../types';
+import { FeedComment, FeedLikeUser, FeedPost, UserProfile } from '../types';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -112,9 +112,13 @@ export async function deleteComment(uid: string, postId: string, commentId: stri
 }
 
 /**
- * Lista o feed social de um grupo
+ * Lista o feed social de um grupo, com flag isLikedByMe se uid fornecido
  */
-export async function getGroupFeed(groupId: string, limit: number = 20): Promise<FeedPost[]> {
+export async function getGroupFeed(
+  groupId: string,
+  limit: number = 20,
+  uid?: string
+): Promise<FeedPost[]> {
   const feedSnap = await db
     .collection('feed')
     .where('groupId', '==', groupId)
@@ -122,7 +126,25 @@ export async function getGroupFeed(groupId: string, limit: number = 20): Promise
     .limit(limit)
     .get();
 
-  return feedSnap.docs.map((d) => d.data() as FeedPost);
+  if (!uid) {
+    return feedSnap.docs.map((d) => d.data() as FeedPost);
+  }
+
+  // Verifica isLikedByMe em paralelo para todos os posts
+  const posts = await Promise.all(
+    feedSnap.docs.map(async (d) => {
+      const post = d.data() as FeedPost;
+      const likeSnap = await db
+        .collection('feed')
+        .doc(post.id)
+        .collection('likes')
+        .doc(uid)
+        .get();
+      return { ...post, isLikedByMe: likeSnap.exists };
+    })
+  );
+
+  return posts;
 }
 
 /**
@@ -137,4 +159,39 @@ export async function getPostComments(postId: string): Promise<FeedComment[]> {
     .get();
 
   return commentsSnap.docs.map((d) => d.data() as FeedComment);
+}
+
+/**
+ * Retorna a lista de usuários que curtiram um post
+ */
+export async function getPostLikes(postId: string): Promise<FeedLikeUser[]> {
+  const likesSnap = await db
+    .collection('feed')
+    .doc(postId)
+    .collection('likes')
+    .get();
+
+  if (likesSnap.empty) return [];
+
+  // Busca dados dos usuários em batch
+  const uids = likesSnap.docs.map((d) => d.data().uid as string).filter(Boolean);
+
+  if (uids.length === 0) return [];
+
+  const userRefs = uids.map((uid) => db.collection('users').doc(uid));
+  const userSnaps = await db.getAll(...userRefs);
+
+  const result: FeedLikeUser[] = [];
+  for (const snap of userSnaps) {
+    if (!snap.exists) continue;
+    const data = snap.data() as UserProfile;
+    result.push({
+      uid: data.uid,
+      name: data.name,
+      nickname: data.nickname,
+      avatarUrl: data.avatarUrl || null,
+    });
+  }
+
+  return result;
 }

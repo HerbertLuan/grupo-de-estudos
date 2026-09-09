@@ -1,6 +1,6 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase/config';
-import type { FeedComment, FeedPost } from '../types';
+import type { FeedComment, FeedLikeUser, FeedPost } from '../types';
 
 /**
  * Obtém as publicações do feed social de um grupo específico.
@@ -107,6 +107,24 @@ export async function getComments(postId: string): Promise<FeedComment[]> {
   } catch (error: any) {
     const message = error?.message || 'Erro ao carregar comentários.';
     console.error('Erro em getComments:', error);
+    throw new Error(message);
+  }
+}
+
+/**
+ * Retorna a lista de usuários que curtiram uma publicação específica.
+ */
+export async function getPostLikes(postId: string): Promise<FeedLikeUser[]> {
+  try {
+    const fn = httpsCallable<{ postId: string }, FeedLikeUser[]>(
+      functions,
+      'get_post_likes'
+    );
+    const result = await fn({ postId });
+    return result.data;
+  } catch (error: any) {
+    const message = error?.message || 'Erro ao carregar curtidas.';
+    console.error('Erro em getPostLikes:', error);
     throw new Error(message);
   }
 }

@@ -3,12 +3,13 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { useFeed } from '../hooks/useFeed';
 import { FeedPostCard } from '../components/feed/FeedPostCard';
 import { CommentSheet } from '../components/feed/CommentSheet';
+import { LikesModal } from '../components/feed/LikesModal';
 import { LoadingState } from '../components/ui/LoadingState';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState } from '../components/ui/ErrorState';
 import { useToast } from '../components/ui/Toast';
-import { getComments } from '../services/feedService';
-import type { FeedComment } from '../types';
+import { getComments, getPostLikes } from '../services/feedService';
+import type { FeedComment, FeedLikeUser } from '../types';
 
 export const FeedPage: React.FC = () => {
   const { user, profile } = useAuthContext();
@@ -19,6 +20,12 @@ export const FeedPage: React.FC = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [sheetComments, setSheetComments] = useState<FeedComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
+
+  // Estado do modal de curtidas
+  const [likesPostId, setLikesPostId] = useState<string | null>(null);
+  const [isLikesOpen, setIsLikesOpen] = useState(false);
+  const [likesList, setLikesList] = useState<FeedLikeUser[]>([]);
+  const [likesLoading, setLikesLoading] = useState(false);
 
   useEffect(() => {
     fetchFeed();
@@ -64,6 +71,27 @@ export const FeedPage: React.FC = () => {
     }
   }, [toggleLike, showToast]);
 
+  const handleShowLikes = useCallback(async (postId: string) => {
+    setLikesPostId(postId);
+    setIsLikesOpen(true);
+    setLikesList([]);
+    setLikesLoading(true);
+    try {
+      const result = await getPostLikes(postId);
+      setLikesList(result);
+    } catch {
+      showToast('Erro ao carregar curtidas', 'error');
+    } finally {
+      setLikesLoading(false);
+    }
+  }, [showToast]);
+
+  const handleCloseLikes = useCallback(() => {
+    setIsLikesOpen(false);
+    setLikesPostId(null);
+    setLikesList([]);
+  }, []);
+
   return (
     <div className="pb-28 max-w-2xl mx-auto w-full min-h-full">
       {/* Header */}
@@ -103,6 +131,7 @@ export const FeedPage: React.FC = () => {
               post={post}
               onLike={handleLike}
               onComment={handleOpenComments}
+              onShowLikes={handleShowLikes}
             />
           ))}
         </div>
@@ -118,6 +147,15 @@ export const FeedPage: React.FC = () => {
         onDeleteComment={handleDeleteComment}
         currentUserId={user?.uid || ''}
       />
+
+      {/* Likes modal */}
+      <LikesModal
+        isOpen={isLikesOpen}
+        onClose={handleCloseLikes}
+        likes={likesList}
+        isLoading={likesLoading}
+      />
     </div>
   );
 };
+

@@ -57,29 +57,39 @@ export const CommentSheet: React.FC<CommentSheetProps> = ({
               {comments.length === 0 ? (
                 <div className="text-center text-text-secondary py-10">Nenhum comentário ainda. Seja o primeiro!</div>
               ) : (
-                comments.map(c => (
-                  <div key={c.id} className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-bg-tertiary flex-shrink-0 overflow-hidden">
-                      {c.authorAvatarUrl ? <img src={c.authorAvatarUrl} alt="" className="w-full h-full object-cover"/> : <span className="flex items-center justify-center h-full text-xs">👤</span>}
-                    </div>
-                    <div className="flex-1 bg-bg-secondary p-3 rounded-2xl rounded-tl-sm border border-border relative group">
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="font-semibold text-xs text-text-primary">{c.authorName}</span>
-                        <span className="text-[10px] text-text-muted">{formatRelativeTime(c.createdAt)}</span>
+                comments.map(c => {
+                  // Compatibilidade defensiva com campos legados
+                  const avatarUrl = c.userAvatarUrl || c.authorAvatarUrl;
+                  const authorName = c.userNickname || c.authorName || 'Usuário';
+                  const authorId = c.userId || c.authorId;
+
+                  return (
+                    <div key={c.id} className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-bg-tertiary flex-shrink-0 overflow-hidden">
+                        {avatarUrl
+                          ? <img src={avatarUrl} alt={authorName} className="w-full h-full object-cover"/>
+                          : <span className="flex items-center justify-center h-full text-xs">👤</span>
+                        }
                       </div>
-                      <p className="text-sm text-text-secondary">{c.content}</p>
-                      
-                      {c.authorId === currentUserId && (
-                        <button 
-                          onClick={() => onDeleteComment(c.id)}
-                          className="absolute -right-2 -top-2 w-6 h-6 bg-accent-danger text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
-                        >
-                          🗑
-                        </button>
-                      )}
+                      <div className="flex-1 bg-bg-secondary p-3 rounded-2xl rounded-tl-sm border border-border relative group">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="font-semibold text-xs text-text-primary">{authorName}</span>
+                          <span className="text-[10px] text-text-muted">{formatRelativeTime(c.createdAt)}</span>
+                        </div>
+                        <p className="text-sm text-text-secondary">{c.content}</p>
+
+                        {authorId === currentUserId && (
+                          <button 
+                            onClick={() => onDeleteComment(c.id)}
+                            className="absolute -right-2 -top-2 w-6 h-6 bg-accent-danger text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                          >
+                            🗑
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
             

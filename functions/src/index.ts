@@ -18,6 +18,7 @@ import {
   deleteComment,
   getGroupFeed,
   getPostComments,
+  getPostLikes,
   toggleLikePost,
 } from './services/socialService';
 import { recalculateUserStats } from './services/auditService';
@@ -150,10 +151,10 @@ export const get_user_history = onCall({ invoker: 'public' }, async (request) =>
 // ============================================================================
 
 export const get_group_feed = onCall({ invoker: 'public' }, async (request) => {
-  assertAuthenticated(request.auth);
+  const uid = assertAuthenticated(request.auth);
   const { groupId, limit } = request.data || {};
   if (!groupId) throw new HttpsError('invalid-argument', 'O ID do grupo é obrigatório.');
-  return await getGroupFeed(groupId, limit || 20);
+  return await getGroupFeed(groupId, limit || 20, uid);
 });
 
 export const toggle_like_post = onCall({ invoker: 'public' }, async (request) => {
@@ -187,6 +188,13 @@ export const get_post_comments = onCall({ invoker: 'public' }, async (request) =
   const { postId } = request.data || {};
   if (!postId) throw new HttpsError('invalid-argument', 'O ID da postagem é obrigatório.');
   return await getPostComments(postId);
+});
+
+export const get_post_likes = onCall({ invoker: 'public' }, async (request) => {
+  assertAuthenticated(request.auth);
+  const { postId } = request.data || {};
+  if (!postId) throw new HttpsError('invalid-argument', 'O ID da postagem é obrigatório.');
+  return await getPostLikes(postId);
 });
 
 // ============================================================================
