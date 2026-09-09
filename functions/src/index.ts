@@ -1,0 +1,200 @@
+import * as admin from 'firebase-admin';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { setGlobalOptions } from 'firebase-functions/v2';
+import { registerUser, ensureUserProfile } from './services/authService';
+import { createGroup, getGroupMembers, joinGroupWithInviteCode } from './services/groupService';
+import {
+  discardStudySession,
+  finishStudySession,
+  getCurrentSession,
+  pauseStudySession,
+  resumeStudySession,
+  startStudySession,
+} from './services/timerService';
+import { getLeaderboard, RankingPeriod } from './services/rankingService';
+import { getUserHistory, getUserStats } from './services/statsService';
+import {
+  addComment,
+  deleteComment,
+  getGroupFeed,
+  getPostComments,
+  toggleLikePost,
+} from './services/socialService';
+import { recalculateUserStats } from './services/auditService';
+
+// Inicializa o Firebase Admin SDK
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+// Configuração padrão de região (São Paulo ou padrão us-central1 conforme configuração de projeto)
+setGlobalOptions({
+  region: 'southamerica-east1', // São Paulo
+  maxInstances: 10,
+  invoker: 'public',
+});
+
+/**
+ * Helper para validar se a requisição possui usuário autenticado
+ */
+function assertAuthenticated(auth: any): string {
+  if (!auth || !auth.uid) {
+    throw new HttpsError('unauthenticated', 'Ação permitida apenas para usuários autenticados.');
+  }
+  return auth.uid;
+}
+
+// ============================================================================
+// 1. AUTENTICAÇÃO E CADASTRO
+// ============================================================================
+
+export const register_user = onCall({ invoker: 'public' }, async (request) => {
+  const { name, nickname, password } = request.data || {};
+  return await registerUser({ name, nickname, password });
+});
+
+export const ensure_user_profile = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  return await ensureUserProfile(uid);
+});
+
+// ============================================================================
+// 2. GESTÃO DE GRUPOS PRIVADOS
+// ============================================================================
+
+export const create_group = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  const { name, inviteCode, timezone } = request.data || {};
+  return await createGroup(uid, { name, inviteCode, timezone });
+});
+
+export const join_group_with_code = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  const { inviteCode } = request.data || {};
+  return await joinGroupWithInviteCode(uid, inviteCode);
+});
+
+export const get_group_members = onCall({ invoker: 'public' }, async (request) => {
+  assertAuthenticated(request.auth);
+  const { groupId } = request.data || {};
+  if (!groupId) {
+    throw new HttpsError('invalid-argument', 'O ID do grupo é obrigatório.');
+  }
+  return await getGroupMembers(groupId);
+});
+
+// ============================================================================
+// 3. CRONÔMETRO DE ESTUDO (OPERAÇÕES CRÍTICAS)
+// ============================================================================
+
+export const start_study_session = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  return await startStudySession(uid);
+});
+
+export const pause_study_session = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  return await pauseStudySession(uid);
+});
+
+export const resume_study_session = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  return await resumeStudySession(uid);
+});
+
+export const finish_study_session = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  return await finishStudySession(uid);
+});
+
+export const discard_study_session = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  await discardStudySession(uid);
+  return { success: true };
+});
+
+export const get_current_session = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  return await getCurrentSession(uid);
+});
+
+// ============================================================================
+// 4. RANKING E CLASSIFICAÇÃO
+// ============================================================================
+
+export const get_leaderboard = onCall({ invoker: 'public' }, async (request) => {
+  assertAuthenticated(request.auth);
+  const { groupId, period } = request.data || {};
+  return await getLeaderboard(groupId, period as RankingPeriod);
+});
+
+// ============================================================================
+// 5. ESTATÍSTICAS E HISTÓRICO
+// ============================================================================
+
+export const get_user_stats = onCall({ invoker: 'public' }, async (request) => {
+  const callerUid = assertAuthenticated(request.auth);
+  const targetUid = request.data?.uid || callerUid;
+  return await getUserStats(targetUid);
+});
+
+export const get_user_history = onCall({ invoker: 'public' }, async (request) => {
+  const callerUid = assertAuthenticated(request.auth);
+  const targetUid = request.data?.uid || callerUid;
+  const limit = request.data?.limit || 30;
+  return await getUserHistory(targetUid, limit);
+});
+
+// ============================================================================
+// 6. FEED SOCIAL, CURTIDAS E COMENTÁRIOS
+// ============================================================================
+
+export const get_group_feed = onCall({ invoker: 'public' }, async (request) => {
+  assertAuthenticated(request.auth);
+  const { groupId, limit } = request.data || {};
+  if (!groupId) throw new HttpsError('invalid-argument', 'O ID do grupo é obrigatório.');
+  return await getGroupFeed(groupId, limit || 20);
+});
+
+export const toggle_like_post = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  const { postId } = request.data || {};
+  if (!postId) throw new HttpsError('invalid-argument', 'O ID da postagem é obrigatório.');
+  return await toggleLikePost(uid, postId);
+});
+
+export const add_comment = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  const { postId, content } = request.data || {};
+  if (!postId || !content) {
+    throw new HttpsError('invalid-argument', 'O ID da postagem e o conteúdo do comentário são obrigatórios.');
+  }
+  return await addComment(uid, postId, content);
+});
+
+export const delete_comment = onCall({ invoker: 'public' }, async (request) => {
+  const uid = assertAuthenticated(request.auth);
+  const { postId, commentId } = request.data || {};
+  if (!postId || !commentId) {
+    throw new HttpsError('invalid-argument', 'O ID da postagem e o ID do comentário são obrigatórios.');
+  }
+  await deleteComment(uid, postId, commentId);
+  return { success: true };
+});
+
+export const get_post_comments = onCall({ invoker: 'public' }, async (request) => {
+  assertAuthenticated(request.auth);
+  const { postId } = request.data || {};
+  if (!postId) throw new HttpsError('invalid-argument', 'O ID da postagem é obrigatório.');
+  return await getPostComments(postId);
+});
+
+// ============================================================================
+// 7. AUDITORIA E RECONCILIAÇÃO DE AGREGADOS
+// ============================================================================
+
+export const recalculate_user_stats = onCall({ invoker: 'public' }, async (request) => {
+  const callerUid = assertAuthenticated(request.auth);
+  const targetUid = request.data?.uid || callerUid;
+  return await recalculateUserStats(targetUid);
+});

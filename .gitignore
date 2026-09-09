@@ -1,0 +1,30 @@
+# Dependências
+node_modules/
+.pnp
+.pnp.js
+
+# Build
+lib/
+dist/
+*.tsbuildinfo
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+
+# Emuladores e dados locais
+emulator-data/
+*.local
+
+# Variáveis de ambiente e segredos
+.env
+.env.*.local
+service-account*.json
+*.key
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db

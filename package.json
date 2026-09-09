@@ -1,0 +1,24 @@
+{
+  "name": "grupo-de-estudos-backend",
+  "version": "1.0.0",
+  "description": "Backend Firebase completo para plataforma privada de estudos competitivos 'Grupo de Estudos'",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix functions run build",
+    "emulators": "firebase emulators:start",
+    "emulators:export": "firebase emulators:start --export-on-exit=./emulator-data",
+    "seed": "npm --prefix functions run seed",
+    "test": "npm --prefix functions run test",
+    "test:coverage": "npm --prefix functions run test:coverage",
+    "fix-permissions": "npm --prefix functions run fix-permissions"
+  },
+  "keywords": [
+    "firebase",
+    "cloud-firestore",
+    "cloud-functions",
+    "gamification",
+    "study-group"
+  ],
+  "author": "",
+  "license": "MIT"
+}
