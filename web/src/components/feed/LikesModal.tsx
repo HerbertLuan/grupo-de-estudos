@@ -28,10 +28,9 @@ export const LikesModal: React.FC<LikesModalProps> = ({ isOpen, onClose, likes, 
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed bottom-0 left-0 right-0 max-h-[60vh] bg-bg-primary rounded-t-3xl z-50 flex flex-col border-t border-border shadow-2xl"
           >
-            {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
               <h3 className="font-bold text-lg text-text-primary">
-                Curtidas {!isLoading && likes.length > 0 && (
+                Curtidas{!isLoading && likes.length > 0 && (
                   <span className="text-sm font-normal text-text-secondary ml-1">({likes.length})</span>
                 )}
               </h3>
@@ -39,11 +38,10 @@ export const LikesModal: React.FC<LikesModalProps> = ({ isOpen, onClose, likes, 
                 onClick={onClose}
                 className="w-8 h-8 bg-bg-secondary rounded-full flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
               >
-                ?
+                &#x2715;
               </button>
             </div>
 
-            {/* Content */}
             <div className="flex-1 overflow-y-auto p-4">
               {isLoading ? (
                 <div className="flex justify-center py-8">
@@ -51,13 +49,13 @@ export const LikesModal: React.FC<LikesModalProps> = ({ isOpen, onClose, likes, 
                 </div>
               ) : likes.length === 0 ? (
                 <div className="text-center text-text-secondary py-8">
-                  <div className="text-3xl mb-2">??</div>
-                  <p>Ninguém curtiu ainda.</p>
+                  <div className="text-3xl mb-2">&#x1F90D;</div>
+                  <p>Ninguem curtiu ainda.</p>
                 </div>
               ) : (
                 <ul className="space-y-3">
                   {likes.map((user) => {
-                    const displayName = user.nickname || user.name || 'Usuário';
+                    const displayName = user.nickname || user.name || 'Usuario';
                     return (
                       <li key={user.uid} className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-bg-tertiary overflow-hidden flex items-center justify-center flex-shrink-0">
@@ -68,7 +66,7 @@ export const LikesModal: React.FC<LikesModalProps> = ({ isOpen, onClose, likes, 
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-sm">??</span>
+                            <span className="text-sm">&#x1F464;</span>
                           )}
                         </div>
                         <div>
