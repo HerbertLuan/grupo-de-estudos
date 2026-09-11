@@ -262,3 +262,21 @@ export interface RegisterUserResult {
   token?: string;
 }
 
+// ── Timer / Pomodoro ──────────────────────────────────────────────────────────
+
+/** Modo de operação do timer de estudos */
+export type TimerMode = 'stopwatch' | 'timer';
+
+/** Fase atual do ciclo no modo Temporizador */
+export type TimerPhase = 'focus' | 'break';
+
+/** Configurações persistidas do timer (salvas no localStorage) */
+export interface TimerSettings {
+  mode: TimerMode;
+  /** Duração da fase de Foco em segundos (padrão: 25 * 60) */
+  focusDurationSeconds: number;
+  /** Duração da fase de Intervalo em segundos (padrão: 5 * 60) */
+  breakDurationSeconds: number;
+}
+
+
