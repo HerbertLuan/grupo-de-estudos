@@ -22,9 +22,7 @@ export const RankingUserRow: React.FC<RankingUserRowProps> = ({ entry, isCurrent
     return 'text-text-secondary';
   };
 
-  const value = period === 'hours' 
-    ? `${(entry.studySeconds / 3600).toFixed(1)}h`
-    : `${entry.points} pts`;
+  const studyHours = (entry.studySeconds / 3600).toFixed(1);
 
   return (
     <div className={`flex items-center p-3 rounded-xl mb-2 ${isCurrentUser ? 'bg-accent-primary/10 border-l-2 border-accent-primary' : 'bg-bg-secondary'}`}>
@@ -54,8 +52,12 @@ export const RankingUserRow: React.FC<RankingUserRowProps> = ({ entry, isCurrent
       </div>
 
       <div className="text-right">
-        <div className="font-bold text-text-primary">{value}</div>
-        <div className="text-xs text-text-muted">{entry.levelName}</div>
+        <div className="font-bold text-text-primary">{entry.points} pts</div>
+        {period === 'all' ? (
+          <div className="mt-0.5 text-xs font-medium text-accent-primary-hover">{studyHours}h estudadas</div>
+        ) : (
+          <div className="text-xs text-text-muted">{entry.levelName}</div>
+        )}
       </div>
     </div>
   );

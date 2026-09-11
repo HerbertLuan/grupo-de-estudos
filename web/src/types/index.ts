@@ -101,6 +101,8 @@ export interface DailyStudy {
 }
 
 export interface Season {
+  status?: 'draft' | 'active' | 'closed';
+  podium?: { rank: number; uid: string; name: string; nickname: string; avatarUrl: string | null; points: number; studySeconds: number }[];
   id: string;
   groupId: string;
   name: string;
@@ -138,6 +140,7 @@ export interface UserBadge {
 }
 
 export type FeedEventType = 
+  | 'season_closed'
   | 'point_earned' 
   | 'streak_milestone' 
   | 'badge_unlocked' 
@@ -261,4 +264,3 @@ export interface RegisterUserResult {
   nickname: string;
   token?: string;
 }
-

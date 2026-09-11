@@ -8,7 +8,7 @@ import type { LeaderboardResponse, RankingPeriod } from '../types';
  */
 export async function getLeaderboard(
   groupId: string,
-  period: RankingPeriod = 'week'
+  period: RankingPeriod = 'all'
 ): Promise<LeaderboardResponse> {
   try {
     const fn = httpsCallable<

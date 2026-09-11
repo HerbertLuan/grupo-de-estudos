@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2';
+import { runSeedDatabase } from './services/seedService';
 import { registerUser, ensureUserProfile } from './services/authService';
 import { createGroup, getGroupMembers, joinGroupWithInviteCode } from './services/groupService';
 import {
@@ -22,6 +23,9 @@ import {
   toggleLikePost,
 } from './services/socialService';
 import { recalculateUserStats } from './services/auditService';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { createSeason, transitionSeason, closeExpiredSeasons } from './services/seasonService';
+
 
 // Inicializa o Firebase Admin SDK
 if (!admin.apps.length) {
@@ -34,6 +38,11 @@ setGlobalOptions({
   maxInstances: 10,
   invoker: 'public',
 });
+
+export const create_season = onCall(async request => createSeason(assertAuthenticated(request.auth), request.data));
+export const start_season = onCall(async request => transitionSeason(assertAuthenticated(request.auth), request.data?.seasonId, 'start'));
+export const close_season = onCall(async request => transitionSeason(assertAuthenticated(request.auth), request.data?.seasonId, 'close'));
+export const close_expired_seasons = onSchedule({ schedule: 'every 5 minutes', retryCount: 3 }, closeExpiredSeasons);
 
 /**
  * Helper para validar se a requisição possui usuário autenticado
@@ -205,4 +214,29 @@ export const recalculate_user_stats = onCall({ invoker: 'public' }, async (reque
   const callerUid = assertAuthenticated(request.auth);
   const targetUid = request.data?.uid || callerUid;
   return await recalculateUserStats(targetUid);
+});
+
+// ============================================================================
+// 8. SETUP ADMINISTRATIVO & SEED (HOMOLOGAÇÃO)
+// ============================================================================
+
+export const seed_homolog_database = onRequest({ invoker: 'public' }, async (req, res) => {
+  const currentProject = process.env.GCLOUD_PROJECT || '';
+  if (currentProject !== 'grupo-de-estudos-homologacao') {
+    res.status(403).json({
+      error: 'Operação permitida somente no projeto de homologação.',
+    });
+    return;
+  }
+
+  try {
+    const result = await runSeedDatabase(admin.firestore());
+    res.status(200).json(result);
+  } catch (error: any) {
+    console.error('Erro ao executar seed_homolog_database:', error);
+    res.status(500).json({
+      success: false,
+      error: error?.message || 'Erro interno ao executar seed.',
+    });
+  }
 });

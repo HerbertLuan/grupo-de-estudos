@@ -117,7 +117,7 @@ export const ProfilePage: React.FC = () => {
             Conquistas 🏅
             {!badgesLoading && (
               <span className="ml-2 text-sm text-text-muted font-normal">
-                {earned.length}/{catalog.length}
+                {earned.length} conquistadas
               </span>
             )}
           </h2>
@@ -126,6 +126,7 @@ export const ProfilePage: React.FC = () => {
             <LoadingState message="Carregando conquistas..." />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {earned.filter(b => b.id.startsWith('season_')).map(b => <div key={b.id} className="p-4 rounded-2xl border border-accent-success/30 bg-bg-secondary text-center"><div className="text-4xl mb-3">{b.icon}</div><h3 className="font-bold text-sm">{b.name}</h3><p className="text-xs text-text-secondary mt-2">{b.description}</p></div>)}
               {catalog.map(badge => (
                 <BadgeCard
                   key={badge.id}

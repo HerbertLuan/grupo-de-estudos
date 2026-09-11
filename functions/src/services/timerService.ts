@@ -249,6 +249,16 @@ export async function finishStudySession(uid: string): Promise<FinishSessionResu
       tx.get(groupRef),
       tx.get(userBadgesRef),
     ]);
+    const activeSeasonId = groupSnap.data()?.activeSeasonId;
+    const seasonSnap = activeSeasonId ? await tx.get(db.collection('seasons').doc(activeSeasonId)) : null;
+    const season = seasonSnap?.data();
+    const seasonToday = getZonedDateString(now.toDate(), groupSnap.data()?.timezone || DEFAULT_TIMEZONE);
+    // Only sessions started and completed within the active competition qualify.
+    const countsForSeason = !!(season?.active && seasonToday >= season.startDate && seasonToday <= season.endDate &&
+      session.startedAt.toMillis() >= (season.startedAt?.toMillis() ?? season.createdAt?.toMillis() ?? Infinity));
+    const seasonDailySeconds = (dailySnap.data()?.seasonId === activeSeasonId ? dailySnap.data()?.seasonSeconds || 0 : 0) + finalSessionSeconds;
+    const seasonPointAlreadyEarned = dailySnap.data()?.seasonId === activeSeasonId && dailySnap.data()?.seasonPointEarned === true;
+    const seasonPointEarnedNow = countsForSeason && !seasonPointAlreadyEarned && seasonDailySeconds >= POINTS_THRESHOLD_SECONDS;
 
     // ========================================================================
     // CÁLCULOS EM MEMÓRIA
@@ -329,8 +339,11 @@ export async function finishStudySession(uid: string): Promise<FinishSessionResu
         monthPoints: baseMonthPoints + (pointEarnedNow ? 1 : 0),
         monthStudySeconds: baseMonthSeconds + finalSessionSeconds,
         monthId: currentMonth,
-        seasonPoints: (memberData.seasonPoints || 0) + (pointEarnedNow ? 1 : 0),
-        seasonStudySeconds: (memberData.seasonStudySeconds || 0) + finalSessionSeconds,
+        ...(countsForSeason ? {
+          seasonId: activeSeasonId,
+          seasonPoints: (memberData.seasonId === activeSeasonId ? memberData.seasonPoints || 0 : 0) + (seasonPointEarnedNow ? 1 : 0),
+          seasonStudySeconds: (memberData.seasonId === activeSeasonId ? memberData.seasonStudySeconds || 0 : 0) + finalSessionSeconds,
+        } : {}),
         avatarUrl: userData.avatarUrl || null,
         name: userData.name || memberData.name,
         nickname: userData.nickname || memberData.nickname,
@@ -364,6 +377,8 @@ export async function finishStudySession(uid: string): Promise<FinishSessionResu
 
     // 3. Salva documento diário
     tx.set(dailyRef, updatedDaily, { merge: true });
+    if (countsForSeason) tx.set(dailyRef, { seasonId: activeSeasonId, seasonSeconds: seasonDailySeconds,
+      seasonPointEarned: seasonPointAlreadyEarned || seasonPointEarnedNow }, { merge: true });
 
     // 4. Salva membro do grupo
     if (updatedMemberData) {

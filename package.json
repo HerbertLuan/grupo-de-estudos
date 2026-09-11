@@ -8,9 +8,20 @@
     "emulators": "firebase emulators:start",
     "emulators:export": "firebase emulators:start --export-on-exit=./emulator-data",
     "seed": "npm --prefix functions run seed",
+    "seed:homolog": "node -e \"process.env.FIREBASE_PROJECT_ID='grupo-de-estudos-homologacao'; require('child_process').execSync('npm --prefix functions run seed', {stdio: 'inherit', env: process.env})\"",
     "test": "npm --prefix functions run test",
     "test:coverage": "npm --prefix functions run test:coverage",
-    "fix-permissions": "npm --prefix functions run fix-permissions"
+    "fix-permissions": "npm --prefix functions run fix-permissions",
+    "fix-permissions:homolog": "node -e \"process.env.FIREBASE_PROJECT_ID='grupo-de-estudos-homologacao'; require('child_process').execSync('npm --prefix functions run fix-permissions', {stdio: 'inherit', env: process.env})\"",
+    "build:web:homolog": "npm --prefix web run build:homolog",
+    "deploy:homolog": "npm run build:web:homolog && firebase deploy -P homologacao",
+    "deploy:homolog:rules": "firebase deploy --only firestore,storage -P homologacao",
+    "deploy:homolog:functions": "firebase deploy --only functions -P homologacao",
+    "deploy:homolog:hosting": "npm run build:web:homolog && firebase deploy --only hosting -P homologacao",
+    "deploy:prod": "npm --prefix web run build && firebase deploy -P production",
+    "deploy:prod:rules": "firebase deploy --only firestore,storage -P production",
+    "deploy:prod:functions": "firebase deploy --only functions -P production",
+    "deploy:prod:hosting": "npm --prefix web run build && firebase deploy --only hosting -P production"
   },
   "keywords": [
     "firebase",

@@ -327,6 +327,15 @@ Badges são avaliadas de forma estritamente idempotente dentro da transação de
 - Contêm `startDate` e `endDate` no formato `YYYY-MM-DD`.
 - Os membros possuem contadores `seasonPoints` e `seasonStudySeconds` associados ao `seasonId` ativo do grupo.
 - A pontuação histórica geral nunca é apagada ao término ou mudança de temporada.
+- Ciclo: `status: draft | active | closed`, com `active` mantido para compatibilidade. Criação e transições exigem `role: admin` na associação do grupo.
+- Callables: `create_season({groupId, name, startDate, endDate})`, `start_season({seasonId})`, `close_season({seasonId})`.
+- O início é manual, dentro do intervalo previsto, e exige ausência de outra temporada ativa. Uma transação atualiza o grupo, a temporada e zera `seasonPoints`/`seasonStudySeconds` de todos os membros, associando o novo `seasonId`. `totalPoints` e `totalStudySeconds` permanecem intactos.
+- A data final é inclusiva no fuso do grupo. `close_expired_seasons` verifica a cada cinco minutos, com retentativas. O cronômetro bloqueia créditos de temporada fora das datas mesmo se o agendador atrasar.
+- São elegíveis sessões iniciadas depois de `startedAt` e finalizadas enquanto a temporada está ativa e dentro das datas. Sessões que atravessam o início ou o encerramento contam apenas no histórico geral. O registro diário guarda `seasonId`, `seasonSeconds` e `seasonPointEarned` para conceder no máximo um ponto por dia/temporada, sem aproveitar minutos de ciclos anteriores.
+- Encerramento transacional e idempotente: salva `closedAt` e `podium` (snapshot dos três melhores participantes com tempo positivo), limpa `activeSeasonId`, concede `users/{uid}/badges/season_{seasonId}` e cria `feed/season_{seasonId}` com tipo `season_closed`. Desempate: pontos DESC, segundos DESC, entrada no grupo ASC, UID ASC. Grupos com menos de três participantes recebem apenas as posições disponíveis.
+- O pódio arquivado é imutável pelas APIs; novas temporadas não o recalculam. Apenas membros do grupo leem suas temporadas nas regras Firestore.
+- Interface: `/seasons`, acessível pelo ranking, com administração, arquivo, pódio e confetes (respeitando preferência de movimento reduzido). Troféus aparecem no perfil.
+- Testes de integração: com Firestore Emulator ativo, executar `npm --prefix functions test -- --testTimeout=30000`, definindo `FIRESTORE_EMULATOR_HOST` e `GCLOUD_PROJECT` para um projeto local `demo-*`. Sem emulador, esses testes são ignorados; testes unitários continuam executando.
 
 ---
 
