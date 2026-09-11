@@ -2,6 +2,22 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
+    match /study-stories/{uid}/{fileName} {
+      function story() {
+        return firestore.get(/databases/(default)/documents/studyStories/$(request.resource.metadata.storyId)).data;
+      }
+      allow create: if resource == null && request.auth != null && request.auth.uid == uid
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)')
+        && story().userId == uid && story().storagePath == 'study-stories/' + uid + '/' + fileName
+        && story().published == false && story().expiresAt > request.time
+        && firestore.get(/databases/(default)/documents/users/$(uid)).data.activeSessionId == story().sessionId;
+      allow read: if request.auth != null
+        && firestore.get(/databases/(default)/documents/studyStories/$(resource.metadata.storyId)).data.expiresAt > request.time
+        && firestore.get(/databases/(default)/documents/studyStories/$(resource.metadata.storyId)).data.published == true
+        && firestore.exists(/databases/(default)/documents/groups/$(firestore.get(/databases/(default)/documents/studyStories/$(resource.metadata.storyId)).data.groupId)/members/$(request.auth.uid));
+      allow update, delete: if false;
+    }
     // Fotos de perfil: avatars/{uid}/{fileName}
     match /avatars/{uid}/{fileName} {
       // Qualquer usuário autenticado pode ler avatares

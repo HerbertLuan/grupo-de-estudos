@@ -1,3 +1,4 @@
+import { initializeStoryPresence, prepareStory, publishStory, removeStory, reactToStory, cleanupExpiredStories } from './services/storyService';
 import * as admin from 'firebase-admin';
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2';
@@ -240,3 +241,11 @@ export const seed_homolog_database = onRequest({ invoker: 'public' }, async (req
     });
   }
 });
+
+export const prepare_study_story = onCall(request => prepareStory(assertAuthenticated(request.auth)));
+export const publish_study_story = onCall(request => publishStory(assertAuthenticated(request.auth), request.data?.storyId));
+export const remove_study_story = onCall(request => removeStory(assertAuthenticated(request.auth), request.data?.storyId));
+export const react_to_study_story = onCall(request => reactToStory(assertAuthenticated(request.auth), request.data));
+export const expire_study_stories = onSchedule({ schedule: '* * * * *', retryCount: 3 }, cleanupExpiredStories);
+
+export const initialize_story_presence = onCall(request => initializeStoryPresence(assertAuthenticated(request.auth)));

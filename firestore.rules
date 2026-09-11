@@ -63,8 +63,17 @@ service cloud.firestore {
       allow write: if false; // Criado e gerenciado por Cloud Functions
 
       match /members/{memberUid} {
-        allow read: if isAuthenticated();
+        allow read: if isAuthenticated() && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
         allow write: if false; // Agregados e rankings atualizados exclusivamente por Cloud Functions
+      }
+    }
+
+    match /studyStories/{storyId} {
+      allow read: if isAuthenticated() && exists(/databases/$(database)/documents/groups/$(resource.data.groupId)/members/$(request.auth.uid));
+      allow write: if false;
+      match /reactions/{uid} {
+        allow read: if isAuthenticated() && exists(/databases/$(database)/documents/groups/$(get(/databases/$(database)/documents/studyStories/$(storyId)).data.groupId)/members/$(request.auth.uid));
+        allow write: if false;
       }
     }
 

@@ -84,6 +84,7 @@ export async function startStudySession(uid: string): Promise<StudySession> {
     };
 
     tx.set(sessionRef, newSession);
+    tx.set(groupRef.collection('members').doc(uid), { activeSessionId: sessionRef.id, sessionStatus: 'active' }, { merge: true });
     tx.update(userRef, {
       activeSessionId: sessionRef.id,
       updatedAt: now,
@@ -135,6 +136,7 @@ export async function pauseStudySession(uid: string): Promise<StudySession> {
     };
 
     tx.update(sessionRef, updatedSession);
+    tx.set(db.doc(`groups/${session.groupId}/members/${uid}`), { activeSessionId: session.id, sessionStatus: updatedSession.status }, { merge: true });
 
     return {
       ...session,
@@ -180,6 +182,7 @@ export async function resumeStudySession(uid: string): Promise<StudySession> {
     };
 
     tx.update(sessionRef, updatedSession);
+    tx.set(db.doc(`groups/${session.groupId}/members/${uid}`), { activeSessionId: session.id, sessionStatus: updatedSession.status }, { merge: true });
 
     return {
       ...session,
@@ -382,7 +385,7 @@ export async function finishStudySession(uid: string): Promise<FinishSessionResu
 
     // 4. Salva membro do grupo
     if (updatedMemberData) {
-      tx.update(memberRef, updatedMemberData);
+      tx.update(memberRef, { ...updatedMemberData, activeSessionId: null, sessionStatus: null });
     }
 
     // 5. Avalia e concede badges idempotentes
@@ -480,6 +483,7 @@ export async function discardStudySession(uid: string): Promise<void> {
       updatedAt: now,
     });
 
+    if (userData.groupId) tx.set(db.doc(`groups/${userData.groupId}/members/${uid}`), { activeSessionId: null, sessionStatus: null }, { merge: true });
     tx.update(userRef, {
       activeSessionId: null,
       updatedAt: now,

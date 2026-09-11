@@ -10,6 +10,7 @@ import { ErrorState } from '../components/ui/ErrorState';
 import { useToast } from '../components/ui/Toast';
 import { getComments, getPostLikes } from '../services/feedService';
 import type { FeedComment, FeedLikeUser } from '../types';
+import { StudyStories } from '../components/feed/StudyStories';
 
 export const FeedPage: React.FC = () => {
   const { user, profile } = useAuthContext();
@@ -107,6 +108,8 @@ export const FeedPage: React.FC = () => {
         </button>
       </div>
 
+      {profile?.groupId && user && <StudyStories key={profile.groupId} groupId={profile.groupId} uid={user.uid} />}
+
       {loading ? (
         <div className="flex justify-center py-12">
           <LoadingState message="Carregando feed..." />
@@ -158,4 +161,3 @@ export const FeedPage: React.FC = () => {
     </div>
   );
 };
-
