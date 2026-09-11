@@ -49,11 +49,19 @@ export async function publishStory(uid: string, input: unknown) {
     if (!story || story.expiresAt.toMillis() <= Date.now()) throw new HttpsError('failed-precondition', 'A foto expirou. Selecione novamente.');
     if (story.published) return;
     if (user?.groupId !== story.groupId || user?.activeSessionId !== story.sessionId) throw new HttpsError('failed-precondition', 'A sessão mudou. Selecione novamente.');
-    const [session, member] = await Promise.all([tx.get(db.doc(`users/${uid}/studySessions/${story.sessionId}`)), tx.get(db.doc(`groups/${story.groupId}/members/${uid}`))]);
+    const [session, member, previousStories] = await Promise.all([
+      tx.get(db.doc(`users/${uid}/studySessions/${story.sessionId}`)),
+      tx.get(db.doc(`groups/${story.groupId}/members/${uid}`)),
+      tx.get(db.collection('studyStories').where('userId', '==', uid)),
+    ]);
     if (!member.exists || !['active', 'paused'].includes(session.data()?.status)) throw new HttpsError('failed-precondition', 'É preciso ter uma sessão ativa ou pausada.');
-    const previous = user?.activeStoryId;
     // The old generation is hidden atomically; its cleanup cannot delete the new photo/reactions.
-    if (previous && previous !== storyId) tx.update(db.doc(`studyStories/${previous}`), { published: false, expiresAt: admin.firestore.Timestamp.now() });
+    // Derive previous photos from their documents: profile restoration/seed may lose the pointer.
+    for (const previous of previousStories.docs) {
+      if (previous.id !== storyId && previous.data().published) {
+        tx.update(previous.ref, { published: false, expiresAt: admin.firestore.Timestamp.now() });
+      }
+    }
     tx.update(ref, { published: true, createdAt: admin.firestore.Timestamp.now(), photoUrl: `gs://${file.bucket.name}/${file.name}` });
     tx.update(userRef, { activeStoryId: storyId });
   });

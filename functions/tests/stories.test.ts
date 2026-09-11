@@ -58,6 +58,22 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST || !process.env.FIREBASE_ST
     await removeStory(uid, b.storyId);
     expect((await admin.storage().bucket().file(b.storagePath).exists())[0]).toBe(false);
   });
+  it('substitui a foto e apaga reações mesmo após perder a referência no perfil', async () => {
+    await startStudySession(uid);
+    const a = await upload(); await publishStory(uid, a.storyId);
+    await reactToStory(peer, { storyId: a.storyId, emoji: '🔥' });
+    await db.doc(`users/${uid}`).update({ activeStoryId: admin.firestore.FieldValue.delete() });
+    const b = await upload(); await publishStory(uid, b.storyId);
+    expect((await db.doc(`studyStories/${a.storyId}`).get()).exists).toBe(false);
+    expect((await db.collection(`studyStories/${a.storyId}/reactions`).get()).empty).toBe(true);
+    expect((await admin.storage().bucket().file(a.storagePath).exists())[0]).toBe(false);
+    expect((await db.doc(`studyStories/${b.storyId}`).get()).data()?.published).toBe(true);
+    // A stale pointer must not make the next publication fail with a missing document.
+    await db.doc(`users/${uid}`).update({ activeStoryId: 'missing-story' });
+    const c = await upload(); await publishStory(uid, c.storyId);
+    expect((await db.doc(`studyStories/${b.storyId}`).get()).exists).toBe(false);
+    expect((await db.doc(`users/${uid}`).get()).data()?.activeStoryId).toBe(c.storyId);
+  });
   it('mantém uma foto em publicações concorrentes', async () => {
     await startStudySession(uid); const a = await upload(); const b = await upload();
     await Promise.all([publishStory(uid, a.storyId), publishStory(uid, b.storyId)]);

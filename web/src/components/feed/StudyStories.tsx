@@ -129,7 +129,10 @@ export function StudyStories({ groupId, uid }: { groupId: string; uid: string })
     const wake = () => setNow(Date.now()); window.addEventListener('focus', wake); document.addEventListener('visibilitychange', wake);
     return () => { stops.forEach(stop => stop()); clearInterval(timer); window.removeEventListener('focus', wake); document.removeEventListener('visibilitychange', wake); };
   }, [groupId, showToast]);
-  const photos = new Map(stories.filter(s => s.published && s.expiresAt.toMillis() > now).map(s => [s.userId, s]));
+  // Prefer the newest generation while older restored data is reconciled by publication.
+  const photos = new Map(stories.filter(s => s.published && s.expiresAt.toMillis() > now)
+    .sort((a, b) => a.createdAt.toMillis() - b.createdAt.toMillis() || a.id.localeCompare(b.id))
+    .map(s => [s.userId, s]));
   const rank = (m: Member) => m.uid === uid ? -1 : m.activeSessionId ? m.sessionStatus === 'paused' ? 1 : 0 : 2;
   const visible = members.filter(m => m.activeSessionId || photos.has(m.uid)).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name) || a.uid.localeCompare(b.uid));
   const current = visible.find(m => m.uid === selected?.uid); const story = current && photos.get(current.uid);
