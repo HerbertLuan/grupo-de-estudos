@@ -52,6 +52,19 @@ export const StudyPage: React.FC = () => {
     return () => window.removeEventListener('pointerdown', handleFirstInteraction);
   }, [requestPermission]);
 
+  // ── Celebração automática ao fim de ciclo de foco (modo Temporizador) ───────
+  useEffect(() => {
+    const result = timer.lastAutoFinishResult;
+    if (!result) return;
+    if (result.pointEarnedNow) {
+      setCelebrationData(result);
+      setShowCelebration(true);
+    } else {
+      const minutes = Math.floor(result.sessionSeconds / 60);
+      showToast(`Foco concluído! ${minutes}min de estudo salvos.`, 'success');
+    }
+  }, [timer.lastAutoFinishResult, showToast]);
+
   // ── Detectar mudança de fase e emitir notificações ────────────────────────
   useEffect(() => {
     if (timer.status === 'phase_end_focus') {
@@ -100,6 +113,21 @@ export const StudyPage: React.FC = () => {
   }, [timer, showToast]);
 
   const handleFinish = useCallback(async () => {
+    // Se o ciclo de foco já foi auto-finalizado (modo Temporizador), o backend
+    // não tem sessão ativa. Nesse caso, usamos o resultado já capturado.
+    if (!timer.sessionId && timer.lastAutoFinishResult) {
+      const result = timer.lastAutoFinishResult;
+      if (result.pointEarnedNow) {
+        setCelebrationData(result);
+        setShowCelebration(true);
+      } else {
+        const minutes = Math.floor(result.sessionSeconds / 60);
+        showToast(`Sessão finalizada! ${minutes}min estudados.`, 'success');
+      }
+      // Voltar ao estado idle
+      timer.skipBreak();
+      return;
+    }
     const result = await timer.finish();
     if (result) {
       if (result.pointEarnedNow) {
@@ -128,7 +156,7 @@ export const StudyPage: React.FC = () => {
     await handleFinish();
   }, [handleFinish]);
 
-  // Quando usuário clica "Iniciar Novo Foco" após intervalo
+  // Quando usuário clica "Iniciar Novo Foco" após intervalo — cria nova sessão no backend
   const handleStartFocusAfterBreak = useCallback(async () => {
     await handleStart();
   }, [handleStart]);

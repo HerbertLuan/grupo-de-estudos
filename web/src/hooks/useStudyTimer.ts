@@ -17,7 +17,7 @@ import type {
  * - 'active'         → sessão de foco ativa (backend aware)
  * - 'paused'         → sessão de foco pausada
  * - 'active_break'   → intervalo ativo (apenas frontend, sem sessão backend)
- * - 'phase_end_focus'  → fase de foco terminou, aguarda decisão do usuário
+ * - 'phase_end_focus'  → fase de foco terminou e sessão backend já foi finalizada
  * - 'phase_end_break'  → intervalo terminou, aguarda decisão do usuário
  */
 export type TimerStatus =
@@ -38,6 +38,11 @@ export interface UseStudyTimerReturn {
   sessionId: string | null;
   isLoading: boolean;
   error: string | null;
+  /**
+   * Resultado da última finalização automática (ao fim de um ciclo de foco no
+   * modo Temporizador). Limpo ao iniciar um novo foco.
+   */
+  lastAutoFinishResult: FinishSessionResult | null;
 
   // Ações — sessão de foco (com backend)
   start: () => Promise<void>;
@@ -62,6 +67,8 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Resultado da última finalização automática (modo temporizador)
+  const [lastAutoFinishResult, setLastAutoFinishResult] = useState<FinishSessionResult | null>(null);
 
   // Refs para o intervalo
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -130,11 +137,26 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     [stopInterval]
   );
 
-  // ── Fase de Foco encerrou ──────────────────────────────────────────────────
+  // ── Fase de Foco encerrou — finaliza automaticamente a sessão no backend ────
 
-  const handleFocusPhaseEnd = useCallback(() => {
+  const handleFocusPhaseEnd = useCallback(async () => {
+    // Para o intervalo local antes de qualquer await
+    stopInterval();
+    try {
+      const result = await studyService.finishSession();
+      setLastAutoFinishResult(result);
+      setSessionId(null);
+      baseElapsedRef.current = 0;
+      setElapsedSeconds(0);
+      setTimerPhase('focus');
+      phaseRef.current = 'focus';
+      targetEndTimeRef.current = null;
+    } catch {
+      // Se falhar no auto-finish, ainda assim entra em phase_end_focus
+      // para que o usuário possa tentar manualmente
+    }
     setStatus('phase_end_focus');
-  }, []);
+  }, [stopInterval]);
 
   // ── Fase de Intervalo encerrou ─────────────────────────────────────────────
 
@@ -199,13 +221,14 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     if (status === 'idle' || status === 'loading') {
       setRemainingSeconds(focusDurationSeconds);
     }
-  }, [focusDurationSeconds, status]);
+  }, [focusDurationSeconds, mode, status]);
 
   // ── Ações de sessão de Foco (com backend) ─────────────────────────────────
 
   const start = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setLastAutoFinishResult(null); // limpa resultado de ciclo anterior
     try {
       const session = await studyService.startSession();
       setSessionId(session.id);
@@ -316,9 +339,11 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     }
   }, [stopInterval]);
 
-  // ── Ações de Intervalo (apenas frontend) ──────────────────────────────────
+  // ── Ações de Intervalo (puramente frontend — sessão já fechada no backend) ──
 
   const startBreak = useCallback(() => {
+    // A sessão de foco já foi finalizada automaticamente em handleFocusPhaseEnd.
+    // O intervalo é apenas um timer visual sem envolver o backend.
     stopInterval();
     setStatus('active_break');
     setTimerPhase('break');
@@ -348,6 +373,7 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     sessionId,
     isLoading,
     error,
+    lastAutoFinishResult,
     start,
     pause,
     resume,
