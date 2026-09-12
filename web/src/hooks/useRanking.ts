@@ -4,7 +4,7 @@ import type { LeaderboardEntry, RankingPeriod } from '../types';
 
 export function useRanking(groupId: string | null) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [period, setPeriod] = useState<RankingPeriod>('week');
+  const [period, setPeriod] = useState<RankingPeriod>('all');
   const [totalMembers, setTotalMembers] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -26,7 +26,7 @@ const useEmulators = import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
 // com changeOrigin=true, eliminando o CORS no browser.
 const functionsRegionOrDomain =
   import.meta.env.DEV && !useEmulators
-    ? `${window.location.origin}/southamerica-east1-grupo-de-estudos-4b504`
+    ? `${window.location.origin}/functions-proxy`
     : 'southamerica-east1';
 
 export const functions = getFunctions(app, functionsRegionOrDomain);

@@ -106,6 +106,7 @@ export async function joinGroupWithInviteCode(uid: string, inviteCode: string): 
     const userData = userSnap.data()!;
 
     const memberSnap = await tx.get(memberRef);
+    const currentGroup = await tx.get(groupDoc.ref);
     if (memberSnap.exists) {
       return group; // Já é membro
     }
@@ -133,7 +134,7 @@ export async function joinGroupWithInviteCode(uid: string, inviteCode: string): 
       monthId: monthId,
       seasonPoints: 0,
       seasonStudySeconds: 0,
-      seasonId: group.activeSeasonId || null,
+      seasonId: currentGroup.data()?.activeSeasonId || null,
       updatedAt: now,
     };
 

@@ -11,6 +11,7 @@ interface FeedPostCardProps {
 }
 
 const TYPE_ICONS: Record<string, string> = {
+  season_closed: '🏆',
   point_earned: '🎯',
   badge_unlocked: '🏅',
   streak_milestone: '🔥',

@@ -30,7 +30,8 @@ async function main() {
     "get_group_members", "start_study_session", "pause_study_session", "resume_study_session",
     "finish_study_session", "discard_study_session", "get_current_session", "get_leaderboard",
     "get_user_stats", "get_user_history", "get_group_feed", "toggle_like_post",
-    "add_comment", "delete_comment", "get_post_comments", "recalculate_user_stats"
+    "add_comment", "delete_comment", "get_post_comments", "get_post_likes", "recalculate_user_stats",
+    "seed_homolog_database"
   ];
 
   console.log("Verificando permissoes IAM para " + functions.length + " funcoes em " + region + "...");

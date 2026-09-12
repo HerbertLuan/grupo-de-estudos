@@ -9,6 +9,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { JoinGroupPage } from './pages/JoinGroupPage';
 import { StudyPage } from './pages/StudyPage';
 import { RankingPage } from './pages/RankingPage';
+import { SeasonsPage } from './pages/SeasonsPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { FeedPage } from './pages/FeedPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -90,6 +91,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route index element={<StudyPage />} />
         <Route path="ranking" element={<RankingPage />} />
+        <Route path="seasons" element={<SeasonsPage />} />
         <Route path="progress" element={<ProgressPage />} />
         <Route path="feed" element={<FeedPage />} />
         <Route path="profile" element={<ProfilePage />} />

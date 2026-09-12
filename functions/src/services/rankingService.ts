@@ -47,6 +47,7 @@ export async function getLeaderboard(
   }
 
   const members = membersSnap.docs.map((d) => d.data() as GroupMember);
+  const activeSeasonId = period === 'season' ? (await db.collection('groups').doc(groupId).get()).data()?.activeSeasonId : null;
 
   // Busca os perfis de usuário atualizados (users/{uid}) para garantir foto, nome e streak recentes
   const userRefs = members.map((m) => db.collection('users').doc(m.uid));
@@ -98,8 +99,8 @@ export async function getLeaderboard(
         seconds = m.monthStudySeconds || 0;
         break;
       case 'season':
-        points = m.seasonPoints || 0;
-        seconds = m.seasonStudySeconds || 0;
+        points = activeSeasonId && m.seasonId === activeSeasonId ? m.seasonPoints || 0 : 0;
+        seconds = activeSeasonId && m.seasonId === activeSeasonId ? m.seasonStudySeconds || 0 : 0;
         break;
       case 'hours':
         points = m.totalPoints || 0;
@@ -148,7 +149,7 @@ export async function getLeaderboard(
     if (b.studySeconds !== a.studySeconds) {
       return b.studySeconds - a.studySeconds;
     }
-    return a.joinedAtMillis - b.joinedAtMillis;
+    return a.joinedAtMillis - b.joinedAtMillis || a.uid.localeCompare(b.uid);
   });
 
   // Atribuição de posições de rank

@@ -1,5 +1,7 @@
 {
   "projects": {
+    "production": "grupo-de-estudos-4b504",
+    "homologacao": "grupo-de-estudos-homologacao",
     "grupo-de-estudos": "grupo-de-estudos-4b504",
     "default": "grupo-de-estudos-4b504"
   },

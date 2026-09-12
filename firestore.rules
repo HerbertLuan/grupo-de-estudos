@@ -70,7 +70,7 @@ service cloud.firestore {
 
     // Temporadas
     match /seasons/{seasonId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && exists(/databases/$(database)/documents/groups/$(resource.data.groupId)/members/$(request.auth.uid));
       allow write: if false;
     }
 
