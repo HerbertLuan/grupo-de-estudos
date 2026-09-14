@@ -1,0 +1,17 @@
+[
+  {
+    "origin": [
+      "https://grupo-de-estudos-4b504.web.app",
+      "https://grupo-de-estudos-4b504.firebaseapp.com"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": [
+      "Accept-Ranges",
+      "Content-Length",
+      "Content-Range",
+      "Content-Type",
+      "ETag"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

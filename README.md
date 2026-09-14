@@ -19,7 +19,8 @@ Backend completo para a plataforma privada de estudos competitivos **"Grupo de E
 c:\dev\grupo-de-estudos/
 ├── firebase.json              # Configuração do Firebase e portas dos Emuladores
 ├── firestore.rules            # Regras de segurança estritas do Cloud Firestore
-├── storage.rules              # Regras de segurança do Firebase Storage (Avatares)
+├── storage.rules              # Regras de segurança do Firebase Storage
+├── storage.cors.json          # Origens autorizadas a baixar arquivos no navegador
 ├── firestore.indexes.json     # Índices compostos para rankings e consultas
 ├── .env.example               # Template de variáveis de ambiente
 ├── .gitignore                 # Arquivos e pastas ignorados no versionamento
@@ -113,6 +114,11 @@ Isso criará:
 3. Realize o deploy completo:
    ```bash
    firebase deploy
+   ```
+
+4. Quando a configuração CORS do Storage mudar, aplique-a separadamente:
+   ```bash
+   gcloud storage buckets update gs://grupo-de-estudos-4b504.firebasestorage.app --cors-file=storage.cors.json
    ```
 
 ---
