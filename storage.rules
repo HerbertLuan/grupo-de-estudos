@@ -3,6 +3,8 @@ service firebase.storage {
   match /b/{bucket}/o {
     
     match /study-stories/{uid}/{fileName} {
+      // Requer roles/firebaserules.firestoreServiceAgent no agente do Storage.
+      // Não use --non-interactive no primeiro deploy: o CLI precisa habilitar o acesso cross-service.
       function story() {
         return firestore.get(/databases/(default)/documents/studyStories/$(request.resource.metadata.storyId)).data;
       }
