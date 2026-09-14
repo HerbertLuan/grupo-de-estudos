@@ -43,7 +43,7 @@ setGlobalOptions({
 export const create_season = onCall(async request => createSeason(assertAuthenticated(request.auth), request.data));
 export const start_season = onCall(async request => transitionSeason(assertAuthenticated(request.auth), request.data?.seasonId, 'start'));
 export const close_season = onCall(async request => transitionSeason(assertAuthenticated(request.auth), request.data?.seasonId, 'close'));
-export const close_expired_seasons = onSchedule({ schedule: 'every 5 minutes', retryCount: 3 }, closeExpiredSeasons);
+export const close_expired_seasons = onSchedule({ schedule: 'every 1 hours', retryCount: 3 }, closeExpiredSeasons);
 
 /**
  * Helper para validar se a requisição possui usuário autenticado
@@ -246,6 +246,6 @@ export const prepare_study_story = onCall(request => prepareStory(assertAuthenti
 export const publish_study_story = onCall(request => publishStory(assertAuthenticated(request.auth), request.data?.storyId));
 export const remove_study_story = onCall(request => removeStory(assertAuthenticated(request.auth), request.data?.storyId));
 export const react_to_study_story = onCall(request => reactToStory(assertAuthenticated(request.auth), request.data));
-export const expire_study_stories = onSchedule({ schedule: '* * * * *', retryCount: 3 }, cleanupExpiredStories);
+export const expire_study_stories = onSchedule({ schedule: 'every 1 hours', retryCount: 3 }, cleanupExpiredStories);
 
 export const initialize_story_presence = onCall(request => initializeStoryPresence(assertAuthenticated(request.auth)));

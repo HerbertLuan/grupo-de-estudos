@@ -7,8 +7,8 @@ interface RankingTabsProps {
 }
 
 const TABS: { id: RankingPeriod; label: string; featured?: boolean }[] = [
+  { id: 'season', label: 'Temporadas', featured: true },
   { id: 'all', label: 'Geral' },
-  { id: 'season', label: 'Temporada', featured: true },
 ];
 
 export const RankingTabs: React.FC<RankingTabsProps> = ({ activePeriod, onPeriodChange }) => {

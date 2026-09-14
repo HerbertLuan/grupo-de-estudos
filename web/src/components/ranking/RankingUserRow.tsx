@@ -53,7 +53,7 @@ export const RankingUserRow: React.FC<RankingUserRowProps> = ({ entry, isCurrent
 
       <div className="text-right">
         <div className="font-bold text-text-primary">{entry.points} pts</div>
-        {period === 'all' ? (
+        {period === 'all' || period === 'season' ? (
           <div className="mt-0.5 text-xs font-medium text-accent-primary-hover">{studyHours}h estudadas</div>
         ) : (
           <div className="text-xs text-text-muted">{entry.levelName}</div>
