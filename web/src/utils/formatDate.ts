@@ -19,7 +19,14 @@ const PT_BR_MONTHS_SHORT = [
   'dez',
 ];
 
-type DateInput = Date | { toDate: () => Date } | number | string;
+type SerializedTimestamp = {
+  seconds?: number | string;
+  nanoseconds?: number | string;
+  _seconds?: number | string;
+  _nanoseconds?: number | string;
+};
+
+type DateInput = Date | { toDate: () => Date } | SerializedTimestamp | number | string | null | undefined;
 
 /**
  * Converte entradas flexíveis para instância de Date
@@ -36,10 +43,18 @@ function toJsDate(value: DateInput): Date {
   ) {
     return (value as { toDate: () => Date }).toDate();
   }
+  if (typeof value === 'object' && value !== null) {
+    const timestamp = value as SerializedTimestamp;
+    const seconds = Number(timestamp.seconds ?? timestamp._seconds);
+    const nanoseconds = Number(timestamp.nanoseconds ?? timestamp._nanoseconds ?? 0);
+    if (Number.isFinite(seconds) && Number.isFinite(nanoseconds)) {
+      return new Date(seconds * 1000 + nanoseconds / 1_000_000);
+    }
+  }
   if (typeof value === 'string' || typeof value === 'number') {
     return new Date(value);
   }
-  return new Date();
+  return new Date(Number.NaN);
 }
 
 /**
