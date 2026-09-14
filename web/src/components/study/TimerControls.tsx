@@ -12,7 +12,6 @@ export interface TimerControlsProps {
   onResume: () => void;
   onFinish: () => void;
   onDiscard: () => void;
-  onStartBreak: () => void;
   onSkipBreak: () => void;
 }
 
@@ -25,7 +24,6 @@ export function TimerControls({
   onResume,
   onFinish,
   onDiscard,
-  onStartBreak,
   onSkipBreak,
 }: TimerControlsProps) {
 

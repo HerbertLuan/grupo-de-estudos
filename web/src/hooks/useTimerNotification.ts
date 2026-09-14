@@ -44,7 +44,7 @@ function sendNotification(title: string, body: string, icon?: string) {
   if (typeof Notification === 'undefined') return;
   if (Notification.permission !== 'granted') return;
   try {
-    new Notification(title, { body, icon: icon ?? '/vite.svg', silent: true });
+    new Notification(title, { body, icon: icon ?? '/favicon.svg', silent: true });
   } catch {
     // Notificações bloqueadas — ignora
   }

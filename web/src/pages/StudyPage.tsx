@@ -116,15 +116,7 @@ export const StudyPage: React.FC = () => {
     // Se o ciclo de foco já foi auto-finalizado (modo Temporizador), o backend
     // não tem sessão ativa. Nesse caso, usamos o resultado já capturado.
     if (!timer.sessionId && timer.lastAutoFinishResult) {
-      const result = timer.lastAutoFinishResult;
-      if (result.pointEarnedNow) {
-        setCelebrationData(result);
-        setShowCelebration(true);
-      } else {
-        const minutes = Math.floor(result.sessionSeconds / 60);
-        showToast(`Sessão finalizada! ${minutes}min estudados.`, 'success');
-      }
-      // Voltar ao estado idle
+      // O resultado já foi apresentado quando o foco terminou.
       timer.skipBreak();
       return;
     }
@@ -230,7 +222,6 @@ export const StudyPage: React.FC = () => {
           onResume={handleResume}
           onFinish={handleFinish}
           onDiscard={handleDiscard}
-          onStartBreak={timer.startBreak}
           onSkipBreak={timer.skipBreak}
         />
       </div>
@@ -274,7 +265,7 @@ export const StudyPage: React.FC = () => {
 
       {/* Modal de transição de fase (apenas modo timer) */}
       <PhaseTransitionModal
-        status={timer.status}
+        status={showCelebration ? 'idle' : timer.status}
         onStartBreak={timer.startBreak}
         onSkipBreak={timer.skipBreak}
         onStartFocus={handleStartFocusAfterBreak}

@@ -16,13 +16,13 @@ export interface StudyTimerProps {
 }
 
 function getDisplaySeconds(props: StudyTimerProps): number {
-  const { timerMode, timerPhase, elapsedSeconds, remainingSeconds } = props;
+  const { timerMode, elapsedSeconds, remainingSeconds } = props;
   if (timerMode === 'timer') return remainingSeconds;
   return elapsedSeconds;
 }
 
 function getProgressPercent(props: StudyTimerProps): number | null {
-  const { timerMode, timerPhase, elapsedSeconds, remainingSeconds, focusDurationSeconds, breakDurationSeconds } = props;
+  const { timerMode, timerPhase, remainingSeconds, focusDurationSeconds, breakDurationSeconds } = props;
   if (timerMode !== 'timer') return null;
   const total = timerPhase === 'focus' ? focusDurationSeconds : breakDurationSeconds;
   if (total <= 0) return null;
