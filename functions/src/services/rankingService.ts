@@ -1,7 +1,9 @@
 import * as admin from 'firebase-admin';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { GroupMember, LeaderboardEntry } from '../types';
-import { calculateLevel } from './gamificationService';
+import { DEFAULT_TIMEZONE } from '../config/constants';
+import { getZonedDateString } from '../utils/timezone';
+import { calculateLevel, getEffectiveStreak } from './gamificationService';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -15,6 +17,14 @@ export interface LeaderboardResult {
   groupId: string;
   totalMembers: number;
   entries: LeaderboardEntry[];
+}
+
+export function getLeaderboardStreak(
+  currentStreak: number | undefined,
+  lastCompletedDate: string | null | undefined,
+  todayDateStr: string
+): number {
+  return getEffectiveStreak(currentStreak || 0, lastCompletedDate || null, todayDateStr);
 }
 
 /**
@@ -47,7 +57,9 @@ export async function getLeaderboard(
   }
 
   const members = membersSnap.docs.map((d) => d.data() as GroupMember);
-  const activeSeasonId = period === 'season' ? (await db.collection('groups').doc(groupId).get()).data()?.activeSeasonId : null;
+  const group = (await db.collection('groups').doc(groupId).get()).data();
+  const activeSeasonId = period === 'season' ? group?.activeSeasonId : null;
+  const todayDateStr = getZonedDateString(new Date(), group?.timezone || DEFAULT_TIMEZONE);
 
   // Busca os perfis de usuário atualizados (users/{uid}) para garantir foto, nome e streak recentes
   const userRefs = members.map((m) => db.collection('users').doc(m.uid));
@@ -84,7 +96,7 @@ export async function getLeaderboard(
     const avatarUrl = u?.avatarUrl !== undefined ? u.avatarUrl : (m.avatarUrl || null);
     const name = u?.name || m.name;
     const nickname = u?.nickname || m.nickname;
-    const currentStreak = u?.currentStreak || 0;
+    const currentStreak = getLeaderboardStreak(u?.currentStreak, u?.lastCompletedDate, todayDateStr);
 
     let points = 0;
     let seconds = 0;

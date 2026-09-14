@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { calculateLevel, calculateStreakOnDayCompletion, getEffectiveStreak } from '../src/services/gamificationService';
 import { diffCalendarDays, isConsecutiveDay, getDateRange, getCurrentWeekId, getCurrentMonthId } from '../src/utils/timezone';
 import { DEFAULT_BADGES, DEFAULT_LEVELS, POINTS_THRESHOLD_SECONDS } from '../src/config/constants';
+import { getLeaderboardStreak } from '../src/services/rankingService';
 
 describe('1. Regra Fundamental do Cronômetro e Pontos (60 min = 1 ponto, máx 1 ponto/dia)', () => {
   it('59 minutos (3540s) NÃO deve conceder ponto', () => {
@@ -530,7 +531,15 @@ describe('13. Enriquecimento de Perfil no Ranking (Avatar, Nome, Streak)', () =>
     const enrichedAvatar = userProfileDoc.avatarUrl ?? memberDoc.avatarUrl ?? null;
     expect(enrichedAvatar).toBeNull();
   });
-});
 
+  it('Zera no ranking a streak de quem deixou um dia sem completar', () => {
+    expect(getLeaderboardStreak(5, '2026-09-12', '2026-09-14')).toBe(0);
+  });
+
+  it('Mantém no ranking a streak de quem completou ontem ou hoje', () => {
+    expect(getLeaderboardStreak(5, '2026-09-13', '2026-09-14')).toBe(5);
+    expect(getLeaderboardStreak(6, '2026-09-14', '2026-09-14')).toBe(6);
+  });
+});
 
 
