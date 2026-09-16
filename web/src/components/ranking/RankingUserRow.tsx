@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LeaderboardEntry, RankingPeriod } from '../../types';
 
 interface RankingUserRowProps {
@@ -8,6 +9,7 @@ interface RankingUserRowProps {
 }
 
 export const RankingUserRow: React.FC<RankingUserRowProps> = ({ entry, isCurrentUser, period }) => {
+  const navigate = useNavigate();
   const getMedal = (rank: number) => {
     if (rank === 1) return '🥇';
     if (rank === 2) return '🥈';
@@ -25,7 +27,13 @@ export const RankingUserRow: React.FC<RankingUserRowProps> = ({ entry, isCurrent
   const studyHours = (entry.studySeconds / 3600).toFixed(1);
 
   return (
-    <div className={`flex items-center p-3 rounded-xl mb-2 ${isCurrentUser ? 'bg-accent-primary/10 border-l-2 border-accent-primary' : 'bg-bg-secondary'}`}>
+    <div
+      className={`flex items-center p-3 rounded-xl mb-2 cursor-pointer transition-opacity hover:opacity-75 ${isCurrentUser ? 'bg-accent-primary/10 border-l-2 border-accent-primary' : 'bg-bg-secondary'}`}
+      onClick={() => navigate(`/progress/${entry.uid}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => e.key === 'Enter' && navigate(`/progress/${entry.uid}`)}
+    >
       <div className={`w-8 font-bold text-center ${getRankColor(entry.rank)}`}>
         {getMedal(entry.rank)}
       </div>

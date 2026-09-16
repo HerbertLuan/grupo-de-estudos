@@ -14,6 +14,7 @@ import { ProgressPage } from './pages/ProgressPage';
 import { FeedPage } from './pages/FeedPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { EditProfilePage } from './pages/EditProfilePage';
+import { UserProgressPage } from './pages/UserProgressPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading, profile, user } = useAuthContext();
@@ -93,6 +94,7 @@ function AppRoutes() {
         <Route path="ranking" element={<RankingPage />} />
         <Route path="seasons" element={<SeasonsPage />} />
         <Route path="progress" element={<ProgressPage />} />
+        <Route path="progress/:uid" element={<UserProgressPage />} />
         <Route path="feed" element={<FeedPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="profile/edit" element={<EditProfilePage />} />
