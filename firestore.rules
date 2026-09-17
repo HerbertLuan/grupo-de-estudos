@@ -35,8 +35,12 @@ service cloud.firestore {
 
       // Subcoleção de Sessões de Estudo
       match /studySessions/{sessionId} {
-        // Apenas o próprio usuário pode ler suas sessões
-        allow read: if isOwner(uid);
+        // O próprio usuário sempre pode ler suas sessões.
+        // Membros do mesmo grupo também podem ler para exibir o horário de início
+        // no feed (modal "Quem está estudando").
+        allow read: if isOwner(uid) ||
+          (isAuthenticated() &&
+            exists(/databases/$(database)/documents/groups/$(get(/databases/$(database)/documents/users/$(uid)).data.groupId)/members/$(request.auth.uid)));
         // Escrita exclusivamente por Cloud Functions para garantir regras de negócio
         allow write: if false;
       }

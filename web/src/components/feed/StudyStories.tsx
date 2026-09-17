@@ -39,6 +39,7 @@ function Dialog({ children, close, label, className = '' }: { children: ReactNod
 function MemberDetails({ member, timezone, close, anchor }: { member: Member; timezone: string; close: () => void; anchor?: DOMRect }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [daily, setDaily] = useState<{ date: string; seconds: number } | null>(null);
+  const [sessionStartedAt, setSessionStartedAt] = useState<Date | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const { showToast } = useToast();
   const date = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
@@ -46,6 +47,26 @@ function MemberDetails({ member, timezone, close, anchor }: { member: Member; ti
   useEffect(() => onSnapshot(doc(db, 'users', member.uid), s => setProfile(s.data() as UserProfile), () => showToast('Erro ao carregar perfil.', 'error')), [member.uid, showToast]);
   const seconds = daily?.date === date ? daily.seconds : null;
   useEffect(() => onSnapshot(doc(db, 'users', member.uid, 'dailyStudy', date), s => setDaily({ date, seconds: s.data()?.totalSeconds ?? 0 }), () => showToast('Erro ao carregar estudo de hoje.', 'error')), [member.uid, date, showToast]);
+
+  // Busca horário de início da sessão ativa
+  useEffect(() => {
+    if (!member.activeSessionId) { setSessionStartedAt(null); return; }
+    return onSnapshot(
+      doc(db, 'users', member.uid, 'studySessions', member.activeSessionId),
+      s => {
+        const data = s.data();
+        if (!data) { setSessionStartedAt(null); return; }
+        const raw = data.startedAt;
+        setSessionStartedAt(raw?.toDate ? raw.toDate() : raw ? new Date(raw) : null);
+      },
+      () => setSessionStartedAt(null)
+    );
+  }, [member.uid, member.activeSessionId]);
+
+  const sessionStartLabel = sessionStartedAt && member.activeSessionId
+    ? new Intl.DateTimeFormat('pt-BR', { timeZone: timezone, hour: '2-digit', minute: '2-digit' }).format(sessionStartedAt)
+    : null;
+
   const closeRef = useRef(close); useEffect(() => { closeRef.current = close; }, [close]);
   useEffect(() => { if (!anchor) return; const timer = setTimeout(() => closeRef.current(), 5000); return () => clearTimeout(timer); }, [anchor]);
   const style = anchor ? { position: 'fixed' as const, left: Math.max(12, Math.min(anchor.left, window.innerWidth - 300)), top: Math.max(12, Math.min(anchor.bottom + 8, window.innerHeight - 260)), width: 288 } : undefined;
@@ -54,6 +75,7 @@ function MemberDetails({ member, timezone, close, anchor }: { member: Member; ti
     <Avatar src={profile?.avatarUrl ?? member.avatarUrl} name={profile?.name ?? member.name} size="lg" />
     <h2>{profile?.name ?? member.name}</h2><p>@{profile?.nickname ?? member.nickname}</p>
     <strong>{statusText(member)}</strong>
+    {sessionStartLabel && <p>🕐 Iniciou às {sessionStartLabel}</p>}
     <p>{seconds === null ? 'Carregando tempo de hoje…' : `${formatDuration(seconds)} estudados hoje 📚`}</p>
     {!!profile?.currentStreak && <p>🔥 {profile.currentStreak} dias de sequência</p>}
     {!anchor && profile && <p>🎯 {profile.totalPoints} pontos · ⏱️ {formatDuration(profile.totalStudySeconds)} no total</p>}
