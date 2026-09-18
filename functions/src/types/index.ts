@@ -66,6 +66,9 @@ export interface StudySession {
   endedAt: Timestamp | null;
   accumulatedSeconds: number;
   totalSeconds: number;
+  mode?: 'stopwatch' | 'timer';
+  focusDurationSeconds?: number;
+  reviewBaseSeconds?: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -168,6 +171,19 @@ export interface ActiveSessionState {
   hasActiveSession: boolean;
   session: StudySession | null;
   currentElapsedSeconds: number;
+  reviewDueSeconds?: number;
+  reviewCapSeconds?: number;
+  requiresReview?: boolean;
+  autoFinishedResult?: {
+    sessionId: string;
+    studyDate: string;
+    sessionSeconds: number;
+    dailyTotalSeconds: number;
+    pointEarnedNow: boolean;
+    totalPoints: number;
+    currentStreak: number;
+    newBadgesCount: number;
+  };
 }
 
 export interface UserStatsSummary {

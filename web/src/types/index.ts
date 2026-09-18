@@ -66,6 +66,9 @@ export interface StudySession {
   endedAt?: Timestamp | null | any;
   accumulatedSeconds: number;
   totalSeconds: number;
+  mode?: 'stopwatch' | 'timer';
+  focusDurationSeconds?: number;
+  reviewBaseSeconds?: number;
   subjectId?: string | null;
   didQuestions?: boolean | null;
   questionCount?: number | null;
@@ -79,6 +82,10 @@ export interface ActiveSessionState {
   hasActiveSession: boolean;
   session: StudySession | null;
   currentElapsedSeconds: number;
+  reviewDueSeconds?: number;
+  reviewCapSeconds?: number;
+  requiresReview?: boolean;
+  autoFinishedResult?: FinishSessionResult;
 }
 
 export interface FinishSessionResult {

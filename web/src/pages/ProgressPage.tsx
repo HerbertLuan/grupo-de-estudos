@@ -3,7 +3,6 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { useStats } from '../hooks/useStats';
 import { LevelProgress } from '../components/profile/LevelProgress';
 import { StatsCard } from '../components/profile/StatsCard';
-import { HistorySection } from '../components/progress/HistorySection';
 import { SubjectProgress } from '../components/progress/SubjectProgress';
 import { LoadingState } from '../components/ui/LoadingState';
 import { ErrorState } from '../components/ui/ErrorState';
@@ -66,23 +65,12 @@ export const ProgressPage: React.FC = () => {
         progressPercentage={summary.level.progressPercentage}
       />
 
-      {/* Streak & Points */}
+      {/* Historical and season indicators */}
       <div className="grid grid-cols-2 gap-3">
-        <StatsCard
-          label="Streak Atual"
-          value={`${summary.currentStreak} dias`}
-          icon="🔥"
-        />
         <StatsCard
           label="Maior Streak"
           value={`${summary.longestStreak} dias`}
           icon="🏆"
-        />
-        <StatsCard
-          label="Pontos Totais"
-          value={summary.totalPoints}
-          icon="🎯"
-          highlight
         />
         <StatsCard
           label="Pontos Temporada"
@@ -91,9 +79,8 @@ export const ProgressPage: React.FC = () => {
         />
       </div>
 
-      {/* Subject indicators, charts and sessions */}
-      <SubjectProgress />
-      {user && <HistorySection key={user.uid} uid={user.uid} />}
+      {/* Subject indicators, charts and study history */}
+      {user && <SubjectProgress uid={user.uid} />}
     </div>
   );
 };

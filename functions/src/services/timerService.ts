@@ -14,6 +14,20 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 const db = admin.firestore();
+export const STUDY_CHECKIN_SECONDS = 3 * 60 * 60;
+export const STUDY_REVIEW_GRACE_SECONDS = 30 * 60;
+
+function elapsedSeconds(session: StudySession, nowMillis: number): number {
+  const running = session.status === 'active' && session.lastResumedAt
+    ? Math.max(0, Math.floor((nowMillis - session.lastResumedAt.toMillis()) / 1000))
+    : 0;
+  return (session.accumulatedSeconds || 0) + running;
+}
+
+function reviewLimits(session: StudySession) {
+  const due = (session.reviewBaseSeconds || 0) + STUDY_CHECKIN_SECONDS;
+  return { due, cap: due + STUDY_REVIEW_GRACE_SECONDS };
+}
 
 export interface FinishSessionResult {
   sessionId: string;
@@ -29,7 +43,13 @@ export interface FinishSessionResult {
 /**
  * Inicia uma nova sessão de estudo com garantia atômica de que o usuário só pode ter uma sessão ativa
  */
-export async function startStudySession(uid: string): Promise<StudySession> {
+export async function startStudySession(uid: string, rawConfig?: { mode?: unknown; focusDurationSeconds?: unknown }): Promise<StudySession> {
+  const mode = rawConfig?.mode ?? 'stopwatch';
+  if (mode !== 'stopwatch' && mode !== 'timer') throw new HttpsError('invalid-argument', 'Modo de estudo inválido.');
+  const duration = rawConfig?.focusDurationSeconds;
+  if (mode === 'timer' && (!Number.isSafeInteger(duration) || (duration as number) < 60 || (duration as number) > 4 * 3600)) {
+    throw new HttpsError('invalid-argument', 'Duração do foco inválida.');
+  }
   const userRef = db.collection('users').doc(uid);
 
   return await db.runTransaction(async (tx) => {
@@ -79,6 +99,9 @@ export async function startStudySession(uid: string): Promise<StudySession> {
       endedAt: null,
       accumulatedSeconds: 0,
       totalSeconds: 0,
+      mode,
+      ...(mode === 'timer' ? { focusDurationSeconds: duration as number } : {}),
+      reviewBaseSeconds: 0,
       createdAt: now,
       updatedAt: now,
     };
@@ -123,9 +146,13 @@ export async function pauseStudySession(uid: string): Promise<StudySession> {
     }
 
     const now = admin.firestore.Timestamp.now();
-    const lastResumedMillis = session.lastResumedAt?.toMillis() || session.startedAt.toMillis();
-    const elapsedSinceResume = Math.max(0, Math.floor((now.toMillis() - lastResumedMillis) / 1000));
-    const newAccumulated = session.accumulatedSeconds + elapsedSinceResume;
+    const actualElapsed = elapsedSeconds(session, now.toMillis());
+    if (session.mode !== 'timer' && actualElapsed >= reviewLimits(session).cap) {
+      throw new HttpsError('failed-precondition', 'Revise o tempo desta sessão antes de continuar.');
+    }
+    const newAccumulated = session.mode === 'timer'
+      ? Math.min(actualElapsed, session.focusDurationSeconds || actualElapsed)
+      : actualElapsed;
 
     const updatedSession: Partial<StudySession> = {
       status: 'paused',
@@ -172,6 +199,12 @@ export async function resumeStudySession(uid: string): Promise<StudySession> {
     if (session.status !== 'paused') {
       throw new HttpsError('failed-precondition', `Não é possível retomar uma sessão com status "${session.status}".`);
     }
+    if (session.mode === 'timer' && session.accumulatedSeconds >= (session.focusDurationSeconds || Infinity)) {
+      throw new HttpsError('failed-precondition', 'O tempo de foco já terminou. Finalize esta sessão.');
+    }
+    if (session.mode !== 'timer' && session.accumulatedSeconds >= reviewLimits(session).cap) {
+      throw new HttpsError('failed-precondition', 'Revise o tempo desta sessão antes de continuar.');
+    }
 
     const now = admin.firestore.Timestamp.now();
     const updatedSession: Partial<StudySession> = {
@@ -202,7 +235,7 @@ export async function resumeStudySession(uid: string): Promise<StudySession> {
  * - Agregados do grupo para ranking (semana, mês, temporada, geral)
  * - Concessão de badges e publicação de eventos no feed
  */
-export async function finishStudySession(uid: string, expectedSessionId?: string): Promise<FinishSessionResult> {
+export async function finishStudySession(uid: string, expectedSessionId?: string, reportedSeconds?: number): Promise<FinishSessionResult> {
   if (expectedSessionId !== undefined &&
       (typeof expectedSessionId !== 'string' || !expectedSessionId || expectedSessionId.includes('/'))) {
     throw new HttpsError('invalid-argument', 'Sessão de estudo inválida.');
@@ -242,11 +275,23 @@ export async function finishStudySession(uid: string, expectedSessionId?: string
     }
 
     const now = admin.firestore.Timestamp.now();
-    let finalSessionSeconds = session.accumulatedSeconds;
-
-    if (session.status === 'active' && session.lastResumedAt) {
-      const elapsedSinceResume = Math.max(0, Math.floor((now.toMillis() - session.lastResumedAt.toMillis()) / 1000));
-      finalSessionSeconds += elapsedSinceResume;
+    const actualElapsed = elapsedSeconds(session, now.toMillis());
+    let finalSessionSeconds: number;
+    if (session.mode === 'timer') {
+      if (reportedSeconds !== undefined) throw new HttpsError('invalid-argument', 'Tempo informado não permitido para o temporizador.');
+      finalSessionSeconds = Math.min(actualElapsed, session.focusDurationSeconds || actualElapsed);
+    } else {
+      const { cap } = reviewLimits(session);
+      if (reportedSeconds === undefined) {
+        if (actualElapsed >= cap) throw new HttpsError('failed-precondition', 'Revise o tempo desta sessão antes de finalizar.');
+        finalSessionSeconds = actualElapsed;
+      } else {
+        if (actualElapsed < cap || !Number.isSafeInteger(reportedSeconds) ||
+            reportedSeconds < 0 || reportedSeconds > cap) {
+          throw new HttpsError('invalid-argument', 'Tempo revisado inválido.');
+        }
+        finalSessionSeconds = reportedSeconds;
+      }
     }
 
     // A data de estudo atribuída é a data em que a sessão iniciou (regra da meia-noite)
@@ -475,7 +520,7 @@ export async function finishStudySession(uid: string, expectedSessionId?: string
 /**
  * Descarta a sessão atual sem salvar os minutos (ex: aberta por engano)
  */
-export async function discardStudySession(uid: string): Promise<void> {
+export async function discardStudySession(uid: string, expectedSessionId?: string): Promise<void> {
   const userRef = db.collection('users').doc(uid);
 
   await db.runTransaction(async (tx) => {
@@ -483,7 +528,7 @@ export async function discardStudySession(uid: string): Promise<void> {
     if (!userSnap.exists) throw new HttpsError('not-found', 'Usuário não encontrado.');
     const userData = userSnap.data() as UserProfile;
 
-    if (!userData.activeSessionId) {
+    if (!userData.activeSessionId || (expectedSessionId && userData.activeSessionId !== expectedSessionId)) {
       throw new HttpsError('failed-precondition', 'Não há sessão ativa para descartar.');
     }
 
@@ -502,6 +547,67 @@ export async function discardStudySession(uid: string): Promise<void> {
       updatedAt: now,
     });
   });
+}
+
+export async function confirmStudySession(uid: string, expectedSessionId: unknown): Promise<StudySession> {
+  if (typeof expectedSessionId !== 'string' || !expectedSessionId || expectedSessionId.includes('/')) {
+    throw new HttpsError('invalid-argument', 'Sessão inválida.');
+  }
+  const userRef = db.doc(`users/${uid}`);
+  return db.runTransaction(async tx => {
+    const userSnap = await tx.get(userRef);
+    if (userSnap.data()?.activeSessionId !== expectedSessionId) throw new HttpsError('failed-precondition', 'Sessão não está ativa.');
+    const sessionRef = userRef.collection('studySessions').doc(expectedSessionId);
+    const snap = await tx.get(sessionRef);
+    if (!snap.exists) throw new HttpsError('not-found', 'Sessão não encontrada.');
+    const session = snap.data() as StudySession;
+    if (!['active', 'paused'].includes(session.status) || session.mode === 'timer') throw new HttpsError('failed-precondition', 'Confirmação indisponível.');
+    const now = admin.firestore.Timestamp.now();
+    const elapsed = elapsedSeconds(session, now.toMillis());
+    const { due, cap } = reviewLimits(session);
+    if (elapsed < due || elapsed >= cap) throw new HttpsError('failed-precondition', 'Revise a sessão ou aguarde o aviso.');
+    tx.update(sessionRef, { reviewBaseSeconds: elapsed, updatedAt: now });
+    return { ...session, reviewBaseSeconds: elapsed };
+  });
+}
+
+export async function resolveStudySession(uid: string, rawSessionId: unknown, action: unknown, reportedSeconds: unknown) {
+  if (typeof rawSessionId !== 'string' || !rawSessionId || rawSessionId.includes('/') ||
+      !['finish', 'continue', 'discard'].includes(String(action))) {
+    throw new HttpsError('invalid-argument', 'Revisão inválida.');
+  }
+  if (action === 'discard') {
+    await discardStudySession(uid, rawSessionId);
+    return { action: 'discard' as const };
+  }
+  if (!Number.isSafeInteger(reportedSeconds) || (reportedSeconds as number) < 0) {
+    throw new HttpsError('invalid-argument', 'Informe o tempo estudado em segundos.');
+  }
+  if (action === 'finish') {
+    return { action: 'finish' as const, result: await finishStudySession(uid, rawSessionId, reportedSeconds as number) };
+  }
+  const userRef = db.doc(`users/${uid}`);
+  await db.runTransaction(async tx => {
+    const userSnap = await tx.get(userRef);
+    if (userSnap.data()?.activeSessionId !== rawSessionId) throw new HttpsError('failed-precondition', 'Sessão não está ativa.');
+    const sessionRef = userRef.collection('studySessions').doc(rawSessionId);
+    const snap = await tx.get(sessionRef);
+    if (!snap.exists) throw new HttpsError('not-found', 'Sessão não encontrada.');
+    const session = snap.data() as StudySession;
+    if (!['active', 'paused'].includes(session.status) || session.mode === 'timer') throw new HttpsError('failed-precondition', 'Revisão indisponível.');
+    const now = admin.firestore.Timestamp.now();
+    const elapsed = elapsedSeconds(session, now.toMillis());
+    const { cap } = reviewLimits(session);
+    const seconds = reportedSeconds as number;
+    if (elapsed < cap || seconds < 0 || seconds > cap) {
+      throw new HttpsError('invalid-argument', 'Tempo revisado inválido.');
+    }
+    tx.update(sessionRef, { status: 'active', accumulatedSeconds: seconds, lastResumedAt: now,
+      pausedAt: null, reviewBaseSeconds: seconds, updatedAt: now });
+    tx.set(db.doc(`groups/${session.groupId}/members/${uid}`),
+      { activeSessionId: rawSessionId, sessionStatus: 'active' }, { merge: true });
+  });
+  return { action: 'continue' as const };
 }
 
 /**
@@ -546,16 +652,20 @@ export async function getCurrentSession(uid: string): Promise<ActiveSessionState
     };
   }
 
-  let currentElapsedSeconds = session.accumulatedSeconds;
-  if (session.status === 'active' && session.lastResumedAt) {
-    const nowMillis = Date.now();
-    const elapsed = Math.max(0, Math.floor((nowMillis - session.lastResumedAt.toMillis()) / 1000));
-    currentElapsedSeconds += elapsed;
+  const actualElapsed = elapsedSeconds(session, Date.now());
+  if (session.mode === 'timer' && actualElapsed >= (session.focusDurationSeconds || Infinity)) {
+    const result = await finishStudySession(uid, session.id);
+    return { hasActiveSession: false, session: null, currentElapsedSeconds: 0, autoFinishedResult: result };
   }
+
+  const { due, cap } = reviewLimits(session);
+  const currentElapsedSeconds = session.mode === 'timer' ? actualElapsed : Math.min(actualElapsed, cap);
 
   return {
     hasActiveSession: true,
     session,
     currentElapsedSeconds,
+    ...(session.mode !== 'timer' ? { reviewDueSeconds: due, reviewCapSeconds: cap,
+      requiresReview: actualElapsed >= cap } : {}),
   };
 }

@@ -23,6 +23,7 @@ export const requestSubject = (name: string) => call('request_subject', { name }
 export const reviewSubject = (requestId: string, decision: 'approve' | 'reject', name?: string) => call('review_subject', { requestId, decision, name });
 export const setPreferredSubjects = (subjectIds: string[]) => call<{ subjectIds: string[] }, { preferredSubjectIds: string[] }>('set_preferred_subjects', { subjectIds });
 export const setSubjectColor = (subjectId: string, color: string) => call<{ subjectId: string; color: string }, { subjectId: string; color: string }>('set_subject_color', { subjectId, color });
+export const saveSubjectSetup = (subjectIds: string[], subjectColors: Record<string, string>) => call<{ subjectIds: string[]; subjectColors: Record<string, string> }, { preferredSubjectIds: string[]; subjectColors: Record<string, string> }>('save_subject_setup', { subjectIds, subjectColors });
 export const saveSessionDetails = (details: SessionDetails) => call<SessionDetails, { success: boolean }>('save_session_details', details);
 export const getSubjectSessions = () => call<object, SubjectSession[]>('get_subject_sessions', {});
 export const getSubjectChartData = (uid?: string) => call<{ uid?: string }, SubjectChartData>('get_subject_chart_data', uid ? { uid } : {});

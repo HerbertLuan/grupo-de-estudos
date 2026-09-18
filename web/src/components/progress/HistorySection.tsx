@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getUserHistory } from '../../services/statsService';
 import type { DailyStudy } from '../../types';
+import type { SubjectSession, SubjectSetup } from '../../services/subjectService';
 import { HistoryList } from './HistoryList';
 import { ListModal } from './ListModal';
 
-export function HistorySection({ uid }: { uid: string }) {
+interface Props {
+  uid: string;
+  sessions?: SubjectSession[];
+  setup?: SubjectSetup | null;
+  onEdit?: (session: SubjectSession) => void;
+}
+
+export function HistorySection({ uid, sessions, setup, onEdit }: Props) {
   const [preview, setPreview] = useState<DailyStudy[]>([]);
   const [allHistory, setAllHistory] = useState<DailyStudy[] | null>(null);
   const [open, setOpen] = useState(false);
@@ -28,10 +36,11 @@ export function HistorySection({ uid }: { uid: string }) {
   }, [uid]);
 
   function showAll() { setOpen(true); if (!allHistory) void loadAll(); }
+  function editSession(session: SubjectSession) { setOpen(false); onEdit?.(session); }
 
   return <section className="space-y-3">
-    <div className="flex justify-between items-center gap-3"><h2 className="text-lg font-bold text-text-primary">Histórico Detalhado</h2>{preview.length > 4 && <button type="button" onClick={showAll} className="text-sm text-accent-primary underline">Ver mais</button>}</div>
-    {loading ? <p className="text-text-secondary">Carregando histórico...</p> : error && !open ? <p role="alert" className="text-accent-danger">{error}</p> : <HistoryList history={preview.slice(0, 4)} />}
-    {open && <ListModal title="Histórico detalhado" onClose={() => setOpen(false)}>{modalLoading ? <p className="text-text-secondary">Carregando histórico completo...</p> : error ? <div><p role="alert" className="text-accent-danger mb-3">{error}</p><button type="button" onClick={() => void loadAll()} className="text-accent-primary underline">Tentar novamente</button></div> : <HistoryList history={allHistory || []} />}</ListModal>}
+    <div className="flex justify-between items-center gap-3"><h2 className="text-lg font-bold text-text-primary">Histórico de estudos</h2>{preview.length > 4 && <button type="button" onClick={showAll} className="text-sm text-accent-primary underline">Ver mais</button>}</div>
+    {loading ? <p className="text-text-secondary">Carregando histórico...</p> : error && !open ? <p role="alert" className="text-accent-danger">{error}</p> : <HistoryList history={preview.slice(0, 4)} sessions={sessions} setup={setup} onEdit={editSession} />}
+    {open && <ListModal title="Histórico de estudos" onClose={() => setOpen(false)}>{modalLoading ? <p className="text-text-secondary">Carregando histórico completo...</p> : error ? <div><p role="alert" className="text-accent-danger mb-3">{error}</p><button type="button" onClick={() => void loadAll()} className="text-accent-primary underline">Tentar novamente</button></div> : <HistoryList history={allHistory || []} sessions={sessions} setup={setup} onEdit={editSession} />}</ListModal>}
   </section>;
 }

@@ -6,11 +6,13 @@ import { runSeedDatabase } from './services/seedService';
 import { registerUser, ensureUserProfile } from './services/authService';
 import { createGroup, getGroupMembers, joinGroupWithInviteCode } from './services/groupService';
 import {
+  confirmStudySession,
   discardStudySession,
   finishStudySession,
   getCurrentSession,
   pauseStudySession,
   resumeStudySession,
+  resolveStudySession,
   startStudySession,
 } from './services/timerService';
 import { getLeaderboard, RankingPeriod } from './services/rankingService';
@@ -26,7 +28,7 @@ import {
 import { recalculateUserStats } from './services/auditService';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { createSeason, transitionSeason, closeExpiredSeasons } from './services/seasonService';
-import { createSubject, getSubjectChartData, getSubjectSessions, getSubjectSetup, requestSubject, reviewSubject, saveSessionDetails, setPreferredSubjects, setSubjectColor } from './services/subjectService';
+import { createSubject, getSubjectChartData, getSubjectSessions, getSubjectSetup, requestSubject, reviewSubject, saveSessionDetails, saveSubjectSetup, setPreferredSubjects, setSubjectColor } from './services/subjectService';
 
 
 // Inicializa o Firebase Admin SDK
@@ -101,8 +103,13 @@ export const get_group_members = onCall({ invoker: 'public' }, async (request) =
 
 export const start_study_session = onCall({ invoker: 'public' }, async (request) => {
   const uid = assertAuthenticated(request.auth);
-  return await startStudySession(uid);
+  return await startStudySession(uid, request.data);
 });
+
+export const confirm_study_session = onCall({ invoker: 'public' }, async request =>
+  confirmStudySession(assertAuthenticated(request.auth), request.data?.sessionId));
+export const resolve_study_session = onCall({ invoker: 'public' }, async request =>
+  resolveStudySession(assertAuthenticated(request.auth), request.data?.sessionId, request.data?.action, request.data?.reportedSeconds));
 
 export const pause_study_session = onCall({ invoker: 'public' }, async (request) => {
   const uid = assertAuthenticated(request.auth);
@@ -136,6 +143,7 @@ export const request_subject = onCall(async request => requestSubject(assertAuth
 export const review_subject = onCall(async request => reviewSubject(assertAuthenticated(request.auth), request.data?.requestId, request.data?.decision, request.data?.name));
 export const set_preferred_subjects = onCall(async request => setPreferredSubjects(assertAuthenticated(request.auth), request.data?.subjectIds));
 export const set_subject_color = onCall(async request => setSubjectColor(assertAuthenticated(request.auth), request.data?.subjectId, request.data?.color));
+export const save_subject_setup = onCall(async request => saveSubjectSetup(assertAuthenticated(request.auth), request.data?.subjectIds, request.data?.subjectColors));
 export const save_session_details = onCall(async request => saveSessionDetails(assertAuthenticated(request.auth), request.data));
 export const get_subject_sessions = onCall(async request => getSubjectSessions(assertAuthenticated(request.auth)));
 export const get_subject_chart_data = onCall(async request => getSubjectChartData(assertAuthenticated(request.auth), request.data?.uid || assertAuthenticated(request.auth)));

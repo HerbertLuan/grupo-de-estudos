@@ -1,21 +1,31 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../firebase/config';
-import type { ActiveSessionState, FinishSessionResult, StudySession } from '../types';
+import type { ActiveSessionState, FinishSessionResult, StudySession, TimerSettings } from '../types';
 
 /**
  * Inicia uma nova sessão de estudo para o usuário autenticado.
  * Garante que apenas uma sessão ativa/pausada exista por usuário.
  */
-export async function startSession(): Promise<StudySession> {
+export async function startSession(settings: TimerSettings): Promise<StudySession> {
   try {
-    const fn = httpsCallable<void, StudySession>(functions, 'start_study_session');
-    const result = await fn();
+    const fn = httpsCallable<{ mode: string; focusDurationSeconds: number }, StudySession>(functions, 'start_study_session');
+    const result = await fn({ mode: settings.mode, focusDurationSeconds: settings.focusDurationSeconds });
     return result.data;
   } catch (error: any) {
     const message = error?.message || 'Erro ao iniciar sessão de estudo.';
     console.error('Erro em startSession:', error);
     throw new Error(message);
   }
+}
+
+export async function confirmStudySession(sessionId: string): Promise<StudySession> {
+  const fn = httpsCallable<{ sessionId: string }, StudySession>(functions, 'confirm_study_session');
+  return (await fn({ sessionId })).data;
+}
+
+export async function resolveStudySession(sessionId: string, action: 'finish' | 'continue' | 'discard', reportedSeconds?: number): Promise<{ action: string; result?: FinishSessionResult }> {
+  const fn = httpsCallable<{ sessionId: string; action: string; reportedSeconds?: number }, { action: string; result?: FinishSessionResult }>(functions, 'resolve_study_session');
+  return (await fn({ sessionId, action, ...(reportedSeconds === undefined ? {} : { reportedSeconds }) })).data;
 }
 
 /**

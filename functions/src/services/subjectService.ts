@@ -126,6 +126,39 @@ export async function setPreferredSubjects(uid: string, rawIds: unknown) {
   return { preferredSubjectIds: ids };
 }
 
+export async function saveSubjectSetup(uid: string, rawIds: unknown, rawColors: unknown) {
+  const { groupId } = await membership(uid);
+  if (!Array.isArray(rawIds) || rawIds.length > 100 ||
+      rawIds.some(id => typeof id !== 'string' || !id || id.includes('/'))) {
+    throw new HttpsError('invalid-argument', 'Lista de matérias inválida.');
+  }
+  const ids = [...new Set(rawIds as string[])];
+  if (!rawColors || typeof rawColors !== 'object' || Array.isArray(rawColors)) {
+    throw new HttpsError('invalid-argument', 'Cores inválidas.');
+  }
+  const colors = rawColors as Record<string, unknown>;
+  if (Object.keys(colors).length > 100 || Object.entries(colors).some(([id, color]) =>
+    !ids.includes(id) || typeof color !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(color))) {
+    throw new HttpsError('invalid-argument', 'Cores inválidas.');
+  }
+  const refs = ids.map(id => db.doc(`groups/${groupId}/subjects/${id}`));
+  const docs = refs.length ? await db.getAll(...refs) : [];
+  if (docs.some(d => !d.exists)) throw new HttpsError('invalid-argument', 'Uma matéria não pertence ao catálogo do grupo.');
+
+  const userRef = db.doc(`users/${uid}`);
+  const colorsRef = db.doc(`users/${uid}/privateSettings/subjectColors_${groupId}`);
+  const normalized = Object.fromEntries(Object.entries(colors).map(([id, color]) => [id, (color as string).toLowerCase()]));
+  const subjectColors = await db.runTransaction(async tx => {
+    const colorsSnap = await tx.get(colorsRef);
+    const merged = { ...(colorsSnap.data()?.colors || {}), ...normalized } as Record<string, string>;
+    const updatedAt = admin.firestore.Timestamp.now();
+    tx.update(userRef, { preferredSubjectIds: ids, updatedAt });
+    tx.set(colorsRef, { colors: merged, updatedAt });
+    return merged;
+  });
+  return { preferredSubjectIds: ids, subjectColors };
+}
+
 export async function saveSessionDetails(uid: string, input: any) {
   const { groupId } = await membership(uid);
   const { sessionId, subjectId, didQuestions, questionCount, correctCount } = input || {};

@@ -43,6 +43,11 @@ export interface UseStudyTimerReturn {
    * modo Temporizador). Limpo ao iniciar um novo foco.
    */
   lastAutoFinishResult: FinishSessionResult | null;
+  sessionMode: TimerMode | null;
+  sessionFocusDurationSeconds: number | null;
+  checkInDue: boolean;
+  reviewRequired: boolean;
+  reviewCapSeconds: number | null;
 
   // Ações — sessão de foco (com backend)
   start: () => Promise<void>;
@@ -51,6 +56,8 @@ export interface UseStudyTimerReturn {
   finish: () => Promise<FinishSessionResult | null>;
   discard: () => Promise<void>;
   refresh: () => Promise<void>;
+  confirmCheckIn: () => Promise<void>;
+  resolveReview: (action: 'finish' | 'continue' | 'discard', reportedSeconds?: number) => Promise<{ success: boolean; result: FinishSessionResult | null }>;
 
   // Ações — intervalo (apenas frontend)
   startBreak: () => void;
@@ -69,6 +76,12 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
   const [error, setError] = useState<string | null>(null);
   // Resultado da última finalização automática (modo temporizador)
   const [lastAutoFinishResult, setLastAutoFinishResult] = useState<FinishSessionResult | null>(null);
+  const [sessionMode, setSessionMode] = useState<TimerMode | null>(null);
+  const [sessionFocusDurationSeconds, setSessionFocusDurationSeconds] = useState<number | null>(null);
+  const [reviewBaseSeconds, setReviewBaseSeconds] = useState(0);
+  const [reviewRequired, setReviewRequired] = useState(false);
+  const [reviewCapSeconds, setReviewCapSeconds] = useState<number | null>(null);
+  const reviewCapRef = useRef<number | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const finishPromiseRef = useRef<Promise<FinishSessionResult> | null>(null);
   const manualFinishRequestedRef = useRef(false);
@@ -127,7 +140,14 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
 
         if (modeRef.current === 'stopwatch') {
           const delta = Math.floor((now - (resumedAtRef.current ?? now)) / 1000);
-          setElapsedSeconds(baseElapsedRef.current + delta);
+          const elapsed = baseElapsedRef.current + delta;
+          const cap = reviewCapRef.current;
+          setElapsedSeconds(cap === null ? elapsed : Math.min(elapsed, cap));
+          if (cap !== null && elapsed >= cap) {
+            clearInterval(intervalRef.current!);
+            intervalRef.current = null;
+            setReviewRequired(true);
+          }
         } else {
           // Modo timer — calcular restante com base no targetEndTime
           const target = targetEndTimeRef.current;
@@ -191,6 +211,17 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     try {
       const state: ActiveSessionState = await studyService.getCurrentSession();
       if (state.hasActiveSession && state.session) {
+        const restoredMode = state.session.mode || 'stopwatch';
+        modeRef.current = restoredMode;
+        setSessionMode(restoredMode);
+        if (restoredMode === 'timer' && state.session.focusDurationSeconds) {
+          focusDurRef.current = state.session.focusDurationSeconds;
+          setSessionFocusDurationSeconds(state.session.focusDurationSeconds);
+        } else setSessionFocusDurationSeconds(null);
+        setReviewBaseSeconds(state.session.reviewBaseSeconds || 0);
+        setReviewCapSeconds(state.reviewCapSeconds ?? null);
+        reviewCapRef.current = state.reviewCapSeconds ?? null;
+        setReviewRequired(state.requiresReview ?? false);
         setSessionId(state.session.id);
         sessionIdRef.current = state.session.id;
         baseElapsedRef.current = state.currentElapsedSeconds;
@@ -208,7 +239,8 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
             targetEndTimeRef.current = Date.now() + remaining * 1000;
           }
 
-          startInterval(modeRef.current === 'timer' ? handleFocusPhaseEnd : undefined);
+          if (state.requiresReview) stopInterval();
+          else startInterval(restoredMode === 'timer' ? handleFocusPhaseEnd : undefined);
         } else if (state.session.status === 'paused') {
           setStatus('paused');
           stopInterval();
@@ -220,17 +252,23 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
           }
         }
       } else {
-        setStatus('idle');
+        setStatus(state.autoFinishedResult ? 'phase_end_focus' : 'idle');
+        if (state.autoFinishedResult) setLastAutoFinishResult(state.autoFinishedResult);
+        setSessionMode(null);
+        setSessionFocusDurationSeconds(null);
+        setReviewRequired(false);
+        setReviewCapSeconds(null);
+        reviewCapRef.current = null;
         setSessionId(null);
         sessionIdRef.current = null;
         setElapsedSeconds(0);
         baseElapsedRef.current = 0;
-        setRemainingSeconds(modeRef.current === 'timer' ? focusDurRef.current : 0);
+        setRemainingSeconds(state.autoFinishedResult ? 0 : modeRef.current === 'timer' ? focusDurRef.current : 0);
         stopInterval();
       }
     } catch (err: any) {
       setError(err?.message || 'Erro ao buscar sessão atual');
-      setStatus('idle');
+      if (!sessionIdRef.current) setStatus('idle');
     }
   }, [startInterval, stopInterval, handleFocusPhaseEnd]);
 
@@ -238,6 +276,12 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     refresh();
     return () => stopInterval();
   }, [refresh, stopInterval]);
+
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [refresh]);
 
   // Resetar remaining quando settings mudam e timer está idle
   useEffect(() => {
@@ -253,7 +297,14 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     setError(null);
     setLastAutoFinishResult(null); // limpa resultado de ciclo anterior
     try {
-      const session = await studyService.startSession();
+      const session = await studyService.startSession({ mode: modeRef.current,
+        focusDurationSeconds: focusDurRef.current, breakDurationSeconds: breakDurRef.current });
+      setSessionMode(modeRef.current);
+      setSessionFocusDurationSeconds(modeRef.current === 'timer' ? focusDurRef.current : null);
+      setReviewBaseSeconds(0);
+      setReviewRequired(false);
+      setReviewCapSeconds(modeRef.current === 'stopwatch' ? 3 * 3600 + 30 * 60 : null);
+      reviewCapRef.current = modeRef.current === 'stopwatch' ? 3 * 3600 + 30 * 60 : null;
       setSessionId(session.id);
       sessionIdRef.current = session.id;
       setStatus('active');
@@ -275,6 +326,34 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
       setIsLoading(false);
     }
   }, [startInterval, handleFocusPhaseEnd]);
+
+  const confirmCheckIn = useCallback(async () => {
+    const id = sessionIdRef.current;
+    if (!id) return;
+    setIsLoading(true); setError(null);
+    try {
+      await studyService.confirmStudySession(id);
+      await refresh();
+    } catch (err: any) {
+      await refresh();
+      setError(err?.message || 'Não foi possível confirmar a sessão.');
+    }
+    finally { setIsLoading(false); }
+  }, [refresh]);
+
+  const resolveReview = useCallback(async (action: 'finish' | 'continue' | 'discard', reportedSeconds?: number) => {
+    const id = sessionIdRef.current;
+    if (!id) return { success: false, result: null };
+    setIsLoading(true); setError(null);
+    try {
+      const resolved = await studyService.resolveStudySession(id, action, reportedSeconds);
+      await refresh();
+      return { success: true, result: resolved.result || null };
+    } catch (err: any) {
+      setError(err?.message || 'Não foi possível revisar a sessão.');
+      return { success: false, result: null };
+    } finally { setIsLoading(false); }
+  }, [refresh]);
 
   const pause = useCallback(async () => {
     setIsLoading(true);
@@ -406,12 +485,20 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     isLoading,
     error,
     lastAutoFinishResult,
+    sessionMode,
+    sessionFocusDurationSeconds,
+    checkInDue: (status === 'active' || status === 'paused') && sessionMode === 'stopwatch' &&
+      !reviewRequired && elapsedSeconds >= reviewBaseSeconds + 3 * 3600,
+    reviewRequired,
+    reviewCapSeconds,
     start,
     pause,
     resume,
     finish,
     discard,
     refresh,
+    confirmCheckIn,
+    resolveReview,
     startBreak,
     skipBreak,
   };

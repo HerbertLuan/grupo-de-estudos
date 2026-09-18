@@ -12,6 +12,7 @@ import { PointCelebration } from '../components/study/PointCelebration';
 import { MidnightModal } from '../components/study/MidnightModal';
 import { PhaseTransitionModal } from '../components/study/PhaseTransitionModal';
 import { SessionDetailsModal } from '../components/study/SessionDetailsModal';
+import { LongStudySessionModal } from '../components/study/LongStudySessionModal';
 import { StreakBadge } from '../components/ui/StreakBadge';
 import { useToast } from '../components/ui/Toast';
 import { mapFirebaseError } from '../utils/errors';
@@ -158,6 +159,7 @@ export const StudyPage: React.FC = () => {
     }
     const result = await timer.finish();
     if (result) {
+      setShowMidnight(false);
       queueSessionDetails(result);
       if (!result.pointEarnedNow) {
         const minutes = Math.floor(result.sessionSeconds / 60);
@@ -177,6 +179,14 @@ export const StudyPage: React.FC = () => {
     }
   }, [timer, showToast]);
 
+  const handleResolveReview = useCallback(async (action: 'finish' | 'continue' | 'discard', reportedSeconds?: number) => {
+    const outcome = await timer.resolveReview(action, reportedSeconds);
+    if (!outcome.success) return;
+    setShowMidnight(false);
+    if (action === 'finish' && outcome.result) queueSessionDetails(outcome.result);
+    if (action === 'discard') showToast('Sessão descartada.', 'info');
+  }, [timer, queueSessionDetails, showToast]);
+
   const handleMidnightFinish = useCallback(async () => {
     setShowMidnight(false);
     await handleFinish();
@@ -190,6 +200,8 @@ export const StudyPage: React.FC = () => {
   // ── Sessão está em modo foco ou pausada (conta para DailyProgress) ────────
   const isFocusActive = timer.status === 'active';
   const focusElapsed = isFocusActive ? timer.elapsedSeconds : 0;
+  const currentMode = timer.sessionMode || settings.mode;
+  const currentFocusSeconds = timer.sessionFocusDurationSeconds || settings.focusDurationSeconds;
 
   // ── Seletor de modo desabilitado quando há sessão em andamento ────────────
   const selectorDisabled =
@@ -230,9 +242,9 @@ export const StudyPage: React.FC = () => {
           elapsedSeconds={timer.elapsedSeconds}
           remainingSeconds={timer.remainingSeconds}
           status={timer.status}
-          timerMode={settings.mode}
+          timerMode={currentMode}
           timerPhase={timer.timerPhase}
-          focusDurationSeconds={settings.focusDurationSeconds}
+          focusDurationSeconds={currentFocusSeconds}
           breakDurationSeconds={settings.breakDurationSeconds}
         />
         <div className="w-full px-4 pb-4">
@@ -249,7 +261,7 @@ export const StudyPage: React.FC = () => {
       <div className="w-full">
         <TimerControls
           status={timer.status}
-          timerMode={settings.mode}
+          timerMode={currentMode}
           isLoading={timer.isLoading}
           onStart={handleStart}
           onPause={handlePause}
@@ -285,6 +297,11 @@ export const StudyPage: React.FC = () => {
 
       {/* ── Modais ─────────────────────────────────────────────────────────── */}
       <SessionDetailsModal sessionId={detailsSessionId} onClose={closeSessionDetails} />
+      {(timer.checkInDue || timer.reviewRequired) && <LongStudySessionModal
+        key={`${timer.sessionId}-${timer.reviewCapSeconds}`} reviewRequired={timer.reviewRequired} checkInDue={timer.checkInDue}
+        capSeconds={timer.reviewCapSeconds} busy={timer.isLoading} error={timer.error}
+        onConfirm={() => void timer.confirmCheckIn()} onFinish={() => void handleFinish()}
+        onResolve={(action, seconds) => void handleResolveReview(action, seconds)} />}
       <PointCelebration
         show={showCelebration}
         onClose={() => { setShowCelebration(false); setCelebrationData(null); }}
