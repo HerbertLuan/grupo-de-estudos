@@ -325,6 +325,7 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     setError(null);
     try {
       const result = await requestFinish();
+      stopInterval();
       setStatus('idle');
       setSessionId(null);
       sessionIdRef.current = null;
