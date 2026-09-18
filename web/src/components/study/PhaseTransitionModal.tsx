@@ -8,6 +8,8 @@ export interface PhaseTransitionModalProps {
   onSkipBreak: () => void;
   onStartFocus: () => void;
   onFinish: () => void;
+  requiresFinish: boolean;
+  error: string | null;
 }
 
 export function PhaseTransitionModal({
@@ -16,6 +18,8 @@ export function PhaseTransitionModal({
   onSkipBreak,
   onStartFocus,
   onFinish,
+  requiresFinish,
+  error,
 }: PhaseTransitionModalProps) {
   const isFocusEnd = status === 'phase_end_focus';
   const isBreakEnd = status === 'phase_end_break';
@@ -80,9 +84,10 @@ export function PhaseTransitionModal({
               </h2>
               <p className="text-text-secondary text-sm leading-relaxed">
                 {isFocusEnd
-                  ? 'Ótimo trabalho! Você merece descansar um pouco.'
+                  ? requiresFinish ? 'Não foi possível salvar o foco. Tente finalizar a sessão novamente.' : 'Ótimo trabalho! Você merece descansar um pouco.'
                   : 'Pronto para voltar ao foco?'}
               </p>
+              {isFocusEnd && requiresFinish && error && <p role="alert" className="text-accent-danger text-sm mt-2">{error}</p>}
             </div>
 
             {/* Botões — Fim do Foco */}
@@ -93,29 +98,29 @@ export function PhaseTransitionModal({
                 transition={{ delay: 0.2 }}
                 className="w-full flex flex-col gap-3"
               >
-                <motion.button
+                {!requiresFinish && <motion.button
                   id="btn-start-break"
                   whileTap={{ scale: 0.96 }}
                   onClick={onStartBreak}
                   className="w-full py-4 bg-accent-success hover:bg-green-400 text-bg-primary rounded-xl font-bold text-lg shadow-lg transition-colors"
                 >
                   ☕ Iniciar Intervalo
-                </motion.button>
+                </motion.button>}
                 <motion.button
                   id="btn-finish-after-focus"
                   whileTap={{ scale: 0.96 }}
                   onClick={onFinish}
                   className="w-full py-3.5 bg-bg-tertiary hover:bg-bg-quaternary border border-border text-text-secondary rounded-xl font-bold transition-colors"
                 >
-                  Finalizar Sessão
+                  {requiresFinish ? 'Tentar finalizar novamente' : 'Finalizar Sessão'}
                 </motion.button>
-                <button
+                {!requiresFinish && <button
                   id="btn-skip-break-after-focus"
                   onClick={onSkipBreak}
                   className="text-sm text-text-muted hover:text-text-secondary underline underline-offset-2 transition-colors"
                 >
                   Pular intervalo e continuar estudando
-                </button>
+                </button>}
               </motion.div>
             )}
 

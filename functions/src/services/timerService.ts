@@ -202,7 +202,11 @@ export async function resumeStudySession(uid: string): Promise<StudySession> {
  * - Agregados do grupo para ranking (semana, mês, temporada, geral)
  * - Concessão de badges e publicação de eventos no feed
  */
-export async function finishStudySession(uid: string): Promise<FinishSessionResult> {
+export async function finishStudySession(uid: string, expectedSessionId?: string): Promise<FinishSessionResult> {
+  if (expectedSessionId !== undefined &&
+      (typeof expectedSessionId !== 'string' || !expectedSessionId || expectedSessionId.includes('/'))) {
+    throw new HttpsError('invalid-argument', 'Sessão de estudo inválida.');
+  }
   const userRef = db.collection('users').doc(uid);
 
   // Executa transação atômica
@@ -213,7 +217,16 @@ export async function finishStudySession(uid: string): Promise<FinishSessionResu
     }
     const userData = userSnap.data() as UserProfile;
 
-    if (!userData.activeSessionId) {
+    if (!userData.activeSessionId || (expectedSessionId && userData.activeSessionId !== expectedSessionId)) {
+      // A resposta da primeira finalização fica na própria sessão. Uma repetição
+      // (ou outra aba) recebe o mesmo resultado sem contabilizar tempo duas vezes.
+      if (expectedSessionId) {
+        const previousSnap = await tx.get(userRef.collection('studySessions').doc(expectedSessionId));
+        const previous = previousSnap.data();
+        if (previous?.status === 'completed' && previous.finishResult) {
+          return { result: previous.finishResult as FinishSessionResult, feed: null };
+        }
+      }
       throw new HttpsError('failed-precondition', 'Nenhuma sessão em andamento para finalizar.');
     }
 
@@ -358,20 +371,7 @@ export async function finishStudySession(uid: string): Promise<FinishSessionResu
     // ESCRITAS NO FIRESTORE (Após todas as leituras terem finalizado)
     // ========================================================================
 
-    // 1. Atualiza a sessão para concluída
-    tx.update(sessionRef, {
-      status: 'completed',
-      endedAt: now,
-      totalSeconds: finalSessionSeconds,
-      subjectId: null,
-      didQuestions: null,
-      questionCount: null,
-      correctCount: null,
-      detailsRecorded: false,
-      updatedAt: now,
-    });
-
-    // 2. Atualiza perfil do usuário e libera activeSessionId atomicamente
+    // Atualiza perfil do usuário e libera activeSessionId atomicamente
     tx.update(userRef, {
       activeSessionId: null,
       totalPoints: newTotalPoints,
@@ -410,58 +410,66 @@ export async function finishStudySession(uid: string): Promise<FinishSessionResu
       existingBadgeIds
     );
 
-    return {
+    const result: FinishSessionResult = {
       sessionId: session.id,
-      groupId: session.groupId,
-      userNickname: userData.nickname,
-      userAvatarUrl: userData.avatarUrl,
       studyDate: targetStudyDate,
       sessionSeconds: finalSessionSeconds,
       dailyTotalSeconds: newDailySeconds,
       pointEarnedNow,
       totalPoints: newTotalPoints,
       currentStreak: newCurrentStreak,
-      newlyAwardedBadges,
+      newBadgesCount: newlyAwardedBadges.length,
     };
+    tx.update(sessionRef, {
+      status: 'completed',
+      endedAt: now,
+      totalSeconds: finalSessionSeconds,
+      subjectId: null,
+      didQuestions: null,
+      questionCount: null,
+      correctCount: null,
+      detailsRecorded: false,
+      finishResult: result,
+      updatedAt: now,
+    });
+
+    return { result, feed: {
+      sessionId: session.id,
+      groupId: session.groupId,
+      userNickname: userData.nickname,
+      userAvatarUrl: userData.avatarUrl,
+      newlyAwardedBadges,
+    } };
   });
 
   // Emite eventos de feed fora da transação
-  if (transactionResult.pointEarnedNow) {
+  if (transactionResult.feed && transactionResult.result.pointEarnedNow) {
     await emitFeedEvent(
-      transactionResult.groupId,
+      transactionResult.feed.groupId,
       uid,
-      transactionResult.userNickname,
-      transactionResult.userAvatarUrl,
+      transactionResult.feed.userNickname,
+      transactionResult.feed.userAvatarUrl,
       'point_earned',
       'Ponto Conquistado! 🎯',
-      `${transactionResult.userNickname} acumulou 60 minutos de estudo e conquistou 1 ponto!`,
-      { date: transactionResult.studyDate, totalPoints: transactionResult.totalPoints }
+      `${transactionResult.feed.userNickname} acumulou 60 minutos de estudo e conquistou 1 ponto!`,
+      { date: transactionResult.result.studyDate, totalPoints: transactionResult.result.totalPoints }
     );
   }
 
-  for (const badge of transactionResult.newlyAwardedBadges) {
+  for (const badge of transactionResult.feed?.newlyAwardedBadges || []) {
     await emitFeedEvent(
-      transactionResult.groupId,
+      transactionResult.feed!.groupId,
       uid,
-      transactionResult.userNickname,
-      transactionResult.userAvatarUrl,
+      transactionResult.feed!.userNickname,
+      transactionResult.feed!.userAvatarUrl,
       'badge_unlocked',
       `Nova Conquista: ${badge.name} ${badge.icon}`,
-      `${transactionResult.userNickname} desbloqueou a badge "${badge.name}"!`,
+      `${transactionResult.feed!.userNickname} desbloqueou a badge "${badge.name}"!`,
       { badgeId: badge.id }
     );
   }
 
-  return {
-    sessionId: transactionResult.sessionId,
-    studyDate: transactionResult.studyDate,
-    sessionSeconds: transactionResult.sessionSeconds,
-    dailyTotalSeconds: transactionResult.dailyTotalSeconds,
-    pointEarnedNow: transactionResult.pointEarnedNow,
-    totalPoints: transactionResult.totalPoints,
-    currentStreak: transactionResult.currentStreak,
-    newBadgesCount: transactionResult.newlyAwardedBadges.length,
-  };
+  return transactionResult.result;
 }
 
 /**

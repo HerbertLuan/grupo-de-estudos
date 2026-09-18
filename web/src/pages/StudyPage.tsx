@@ -195,7 +195,7 @@ export const StudyPage: React.FC = () => {
   const selectorDisabled =
     timer.status !== 'idle' &&
     timer.status !== 'loading' &&
-    timer.status !== 'phase_end_focus' &&
+    (timer.status !== 'phase_end_focus' || !!timer.sessionId) &&
     timer.status !== 'phase_end_break';
 
   return (
@@ -305,6 +305,8 @@ export const StudyPage: React.FC = () => {
         onSkipBreak={timer.skipBreak}
         onStartFocus={handleStartFocusAfterBreak}
         onFinish={handleFinish}
+        requiresFinish={!!timer.sessionId}
+        error={timer.error}
       />
     </div>
   );

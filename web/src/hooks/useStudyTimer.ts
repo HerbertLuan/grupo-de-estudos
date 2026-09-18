@@ -69,6 +69,9 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
   const [error, setError] = useState<string | null>(null);
   // Resultado da última finalização automática (modo temporizador)
   const [lastAutoFinishResult, setLastAutoFinishResult] = useState<FinishSessionResult | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const finishPromiseRef = useRef<Promise<FinishSessionResult> | null>(null);
+  const manualFinishRequestedRef = useRef(false);
 
   // Refs para o intervalo
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -94,6 +97,18 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+  }, []);
+
+  const requestFinish = useCallback((): Promise<FinishSessionResult> => {
+    if (finishPromiseRef.current) return finishPromiseRef.current;
+    const id = sessionIdRef.current;
+    if (!id) return Promise.reject(new Error('Nenhuma sessão em andamento para finalizar.'));
+    const promise = studyService.finishSession(id);
+    finishPromiseRef.current = promise;
+    void promise.finally(() => {
+      if (finishPromiseRef.current === promise) finishPromiseRef.current = null;
+    }).catch(() => { /* O chamador apresenta o erro. */ });
+    return promise;
   }, []);
 
   /**
@@ -142,21 +157,27 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
   const handleFocusPhaseEnd = useCallback(async () => {
     // Para o intervalo local antes de qualquer await
     stopInterval();
+    setIsLoading(true);
+    setError(null);
     try {
-      const result = await studyService.finishSession();
+      const result = await requestFinish();
+      if (manualFinishRequestedRef.current) return;
       setLastAutoFinishResult(result);
       setSessionId(null);
+      sessionIdRef.current = null;
       baseElapsedRef.current = 0;
       setElapsedSeconds(0);
       setTimerPhase('focus');
       phaseRef.current = 'focus';
       targetEndTimeRef.current = null;
-    } catch {
-      // Se falhar no auto-finish, ainda assim entra em phase_end_focus
-      // para que o usuário possa tentar manualmente
+    } catch (err: any) {
+      if (manualFinishRequestedRef.current) return;
+      setError(err?.message || 'Erro ao finalizar sessão');
+    } finally {
+      setIsLoading(false);
     }
     setStatus('phase_end_focus');
-  }, [stopInterval]);
+  }, [stopInterval, requestFinish]);
 
   // ── Fase de Intervalo encerrou ─────────────────────────────────────────────
 
@@ -171,6 +192,7 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
       const state: ActiveSessionState = await studyService.getCurrentSession();
       if (state.hasActiveSession && state.session) {
         setSessionId(state.session.id);
+        sessionIdRef.current = state.session.id;
         baseElapsedRef.current = state.currentElapsedSeconds;
         setElapsedSeconds(state.currentElapsedSeconds);
 
@@ -200,6 +222,7 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
       } else {
         setStatus('idle');
         setSessionId(null);
+        sessionIdRef.current = null;
         setElapsedSeconds(0);
         baseElapsedRef.current = 0;
         setRemainingSeconds(modeRef.current === 'timer' ? focusDurRef.current : 0);
@@ -232,6 +255,7 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     try {
       const session = await studyService.startSession();
       setSessionId(session.id);
+      sessionIdRef.current = session.id;
       setStatus('active');
       setTimerPhase('focus');
       phaseRef.current = 'focus';
@@ -296,13 +320,14 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
   }, [startInterval, handleFocusPhaseEnd, remainingSeconds]);
 
   const finish = useCallback(async (): Promise<FinishSessionResult | null> => {
+    manualFinishRequestedRef.current = true;
     setIsLoading(true);
     setError(null);
     try {
-      const result = await studyService.finishSession();
-      stopInterval();
+      const result = await requestFinish();
       setStatus('idle');
       setSessionId(null);
+      sessionIdRef.current = null;
       setElapsedSeconds(0);
       baseElapsedRef.current = 0;
       setTimerPhase('focus');
@@ -312,11 +337,15 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
       return result;
     } catch (err: any) {
       setError(err?.message || 'Erro ao finalizar sessão');
+      if (modeRef.current === 'timer' && targetEndTimeRef.current !== null && targetEndTimeRef.current <= Date.now()) {
+        setStatus('phase_end_focus');
+      }
       return null;
     } finally {
+      manualFinishRequestedRef.current = false;
       setIsLoading(false);
     }
-  }, [stopInterval]);
+  }, [stopInterval, requestFinish]);
 
   const discard = useCallback(async () => {
     setIsLoading(true);
@@ -326,6 +355,7 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
       stopInterval();
       setStatus('idle');
       setSessionId(null);
+      sessionIdRef.current = null;
       setElapsedSeconds(0);
       baseElapsedRef.current = 0;
       setTimerPhase('focus');
@@ -361,6 +391,7 @@ export function useStudyTimer(settings: TimerSettings): UseStudyTimerReturn {
     setElapsedSeconds(0);
     baseElapsedRef.current = 0;
     setSessionId(null);
+    sessionIdRef.current = null;
     setRemainingSeconds(focusDurRef.current);
     targetEndTimeRef.current = null;
   }, [stopInterval]);

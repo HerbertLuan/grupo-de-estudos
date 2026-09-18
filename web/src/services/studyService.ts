@@ -52,10 +52,10 @@ export async function resumeSession(): Promise<StudySession> {
  * Finaliza a sessão de estudo ativa ou pausada, consolidando os segundos no total do dia,
  * calculando streaks, pontos e conquistas de badges.
  */
-export async function finishSession(): Promise<FinishSessionResult> {
+export async function finishSession(sessionId: string): Promise<FinishSessionResult> {
   try {
-    const fn = httpsCallable<void, FinishSessionResult>(functions, 'finish_study_session');
-    const result = await fn();
+    const fn = httpsCallable<{ sessionId: string }, FinishSessionResult>(functions, 'finish_study_session');
+    const result = await fn({ sessionId });
     return result.data;
   } catch (error: any) {
     const message = error?.message || 'Erro ao finalizar sessão de estudo.';

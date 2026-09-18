@@ -116,7 +116,7 @@ export const resume_study_session = onCall({ invoker: 'public' }, async (request
 
 export const finish_study_session = onCall({ invoker: 'public' }, async (request) => {
   const uid = assertAuthenticated(request.auth);
-  return await finishStudySession(uid);
+  return await finishStudySession(uid, request.data?.sessionId);
 });
 
 export const discard_study_session = onCall({ invoker: 'public' }, async (request) => {
