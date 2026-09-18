@@ -24,20 +24,22 @@ export async function getUserStats(uid?: string): Promise<UserStatsResponse> {
 
 /**
  * Obtém o histórico de estudo diário (registros de dailyStudy) do usuário.
- * Permite limitar a quantidade de dias retornados (padrão: 30).
+ * Permite limitar os dias retornados ou carregar o histórico completo sob demanda.
  */
 export async function getUserHistory(
   uid?: string,
-  limit?: number
+  limit?: number,
+  all?: boolean
 ): Promise<DailyStudy[]> {
   try {
-    const fn = httpsCallable<{ uid?: string; limit?: number }, DailyStudy[]>(
+    const fn = httpsCallable<{ uid?: string; limit?: number; all?: boolean }, DailyStudy[]>(
       functions,
       'get_user_history'
     );
-    const payload: { uid?: string; limit?: number } = {};
+    const payload: { uid?: string; limit?: number; all?: boolean } = {};
     if (uid !== undefined) payload.uid = uid;
     if (limit !== undefined) payload.limit = limit;
+    if (all) payload.all = true;
 
     const result = await fn(payload);
     return result.data;

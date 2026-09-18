@@ -3,11 +3,18 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
 // Mock import, will need actual hook later
 import { useAuthContext } from '../../contexts/AuthContext';
+import { useGroupAdmin } from '../../hooks/useGroupAdmin';
 
 const navItems = [
   { path: '/', label: 'Estudar', icon: (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+  )},
+  { path: '/admin', label: 'Admin', icon: (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 4.5 6v5.25c0 4.5 3 8.25 7.5 9.75 4.5-1.5 7.5-5.25 7.5-9.75V6L12 3Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-3-3v6" />
     </svg>
   )},
   { path: '/ranking', label: 'Ranking', icon: (
@@ -31,6 +38,7 @@ export function DesktopSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile } = useAuthContext();
+  const { isAdmin } = useGroupAdmin();
   const displayName = profile?.name || user?.displayName || 'Usuário';
 
   return (
@@ -40,7 +48,7 @@ export function DesktopSidebar() {
       </div>
       
       <nav className="flex-1 px-4 space-y-2 mt-4">
-        {navItems.map((item) => {
+        {navItems.filter(item => item.path !== '/admin' || isAdmin).map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <button

@@ -39,7 +39,7 @@ service cloud.firestore {
         // Membros do mesmo grupo também podem ler para exibir o horário de início
         // no feed (modal "Quem está estudando").
         allow read: if isOwner(uid) ||
-          (isAuthenticated() &&
+          (isAuthenticated() && resource.data.status in ['active', 'paused'] &&
             exists(/databases/$(database)/documents/groups/$(get(/databases/$(database)/documents/users/$(uid)).data.groupId)/members/$(request.auth.uid)));
         // Escrita exclusivamente por Cloud Functions para garantir regras de negócio
         allow write: if false;

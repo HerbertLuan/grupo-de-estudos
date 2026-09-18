@@ -363,6 +363,11 @@ export async function finishStudySession(uid: string): Promise<FinishSessionResu
       status: 'completed',
       endedAt: now,
       totalSeconds: finalSessionSeconds,
+      subjectId: null,
+      didQuestions: null,
+      questionCount: null,
+      correctCount: null,
+      detailsRecorded: false,
       updatedAt: now,
     });
 

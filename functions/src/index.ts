@@ -26,6 +26,7 @@ import {
 import { recalculateUserStats } from './services/auditService';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { createSeason, transitionSeason, closeExpiredSeasons } from './services/seasonService';
+import { createSubject, getSubjectChartData, getSubjectSessions, getSubjectSetup, requestSubject, reviewSubject, saveSessionDetails, setPreferredSubjects, setSubjectColor } from './services/subjectService';
 
 
 // Inicializa o Firebase Admin SDK
@@ -129,6 +130,16 @@ export const get_current_session = onCall({ invoker: 'public' }, async (request)
   return await getCurrentSession(uid);
 });
 
+export const get_subject_setup = onCall(async request => getSubjectSetup(assertAuthenticated(request.auth)));
+export const create_subject = onCall(async request => createSubject(assertAuthenticated(request.auth), request.data?.name));
+export const request_subject = onCall(async request => requestSubject(assertAuthenticated(request.auth), request.data?.name));
+export const review_subject = onCall(async request => reviewSubject(assertAuthenticated(request.auth), request.data?.requestId, request.data?.decision, request.data?.name));
+export const set_preferred_subjects = onCall(async request => setPreferredSubjects(assertAuthenticated(request.auth), request.data?.subjectIds));
+export const set_subject_color = onCall(async request => setSubjectColor(assertAuthenticated(request.auth), request.data?.subjectId, request.data?.color));
+export const save_session_details = onCall(async request => saveSessionDetails(assertAuthenticated(request.auth), request.data));
+export const get_subject_sessions = onCall(async request => getSubjectSessions(assertAuthenticated(request.auth)));
+export const get_subject_chart_data = onCall(async request => getSubjectChartData(assertAuthenticated(request.auth), request.data?.uid || assertAuthenticated(request.auth)));
+
 // ============================================================================
 // 4. RANKING E CLASSIFICAÇÃO
 // ============================================================================
@@ -153,7 +164,7 @@ export const get_user_history = onCall({ invoker: 'public' }, async (request) =>
   const callerUid = assertAuthenticated(request.auth);
   const targetUid = request.data?.uid || callerUid;
   const limit = request.data?.limit || 30;
-  return await getUserHistory(targetUid, limit);
+  return await getUserHistory(targetUid, request.data?.all === true ? null : limit);
 });
 
 // ============================================================================

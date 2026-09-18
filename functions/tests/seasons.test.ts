@@ -57,6 +57,22 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)('Temporadas — integraç�
     expect((await db.doc(`seasons/${s.id}`).get()).data()?.podium[0].points).toBe(2);
     await expect(transitionSeason(uid, s.id, 'start')).rejects.toMatchObject({ code: 'failed-precondition' });
   });
+  it('encerra mesmo quando o post da temporada já existe, preservando o engajamento', async () => {
+    const s = await create();
+    await transitionSeason(uid, s.id, 'start');
+    await db.doc(`groups/${groupId}/members/${uid}`).update({ seasonPoints: 3, seasonStudySeconds: 7200 });
+    const postRef = db.doc(`feed/season_${s.id}`);
+    const createdAt = admin.firestore.Timestamp.fromMillis(1000);
+    await postRef.set({ id: postRef.id, groupId, type: 'season_closed', title: 'Pódio antigo',
+      likeCount: 5, commentCount: 2, createdAt });
+
+    await expect(transitionSeason(uid, s.id, 'close')).resolves.toEqual({ success: true });
+    expect((await db.doc(`seasons/${s.id}`).get()).data()).toMatchObject({ active: false, status: 'closed' });
+    expect((await postRef.get()).data()).toMatchObject({ title: '🏆 Teste encerrada!',
+      metadata: { seasonId: s.id, podium: [{ uid, points: 3 }] },
+      likeCount: 5, commentCount: 2, createdAt });
+    expect((await db.collection('feed').where('groupId', '==', groupId).get()).size).toBe(1);
+  });
   it('fecha automaticamente somente depois do último dia, mesmo sem participantes', async () => {
     const s = await create(); await transitionSeason(uid, s.id, 'start');
     expect(await transitionSeason(null, s.id, 'close')).toEqual({ success: false });

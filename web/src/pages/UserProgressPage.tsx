@@ -5,12 +5,11 @@ import { db } from '../firebase/config';
 import { useStats } from '../hooks/useStats';
 import { LevelProgress } from '../components/profile/LevelProgress';
 import { StatsCard } from '../components/profile/StatsCard';
-import { StudyChart } from '../components/progress/StudyChart';
-import { HistoryList } from '../components/progress/HistoryList';
+import { ProgressCharts } from '../components/progress/ProgressCharts';
+import { HistorySection } from '../components/progress/HistorySection';
 import { LoadingState } from '../components/ui/LoadingState';
 import { ErrorState } from '../components/ui/ErrorState';
-import { getUserHistory } from '../services/statsService';
-import type { DailyStudy, UserProfile } from '../types';
+import type { UserProfile } from '../types';
 import { formatDuration } from '../utils/formatTime';
 
 export const UserProgressPage: React.FC = () => {
@@ -18,8 +17,6 @@ export const UserProgressPage: React.FC = () => {
   const navigate = useNavigate();
 
   const { stats, loading, error, fetchStats } = useStats();
-  const [history, setHistory] = React.useState<DailyStudy[]>([]);
-  const [historyLoading, setHistoryLoading] = React.useState(false);
   const [targetUser, setTargetUser] = React.useState<UserProfile | null>(null);
   const [userLoading, setUserLoading] = React.useState(true);
 
@@ -37,17 +34,8 @@ export const UserProgressPage: React.FC = () => {
       setUserLoading(false);
     }
 
-    // Fetch stats and history
+    // Fetch stats
     await fetchStats(uid);
-    setHistoryLoading(true);
-    try {
-      const h = await getUserHistory(uid, 30);
-      setHistory(h);
-    } catch {
-      // non-critical
-    } finally {
-      setHistoryLoading(false);
-    }
   }, [uid, fetchStats]);
 
   useEffect(() => {
@@ -58,7 +46,7 @@ export const UserProgressPage: React.FC = () => {
   if (error) return <ErrorState message={error} onRetry={loadData} />;
   if (!stats) return null;
 
-  const { summary, timeSeries } = stats;
+  const { summary } = stats;
 
   return (
     <div className="p-4 pb-28 max-w-2xl mx-auto w-full">
@@ -149,23 +137,9 @@ export const UserProgressPage: React.FC = () => {
         />
       </div>
 
-      {/* Charts */}
-      {timeSeries.last7Days.length > 0 && (
-        <StudyChart data={timeSeries.last7Days} title="Últimos 7 dias" />
-      )}
-      {timeSeries.last30Days.length > 0 && (
-        <StudyChart data={timeSeries.last30Days} title="Últimos 30 dias" />
-      )}
+      <section className="space-y-4"><h2 className="text-lg font-bold">Progresso por matéria</h2><ProgressCharts uid={uid} /></section>
 
-      {/* History list */}
-      <div>
-        <h2 className="text-lg font-bold text-text-primary mb-3">Histórico Detalhado</h2>
-        {historyLoading ? (
-          <LoadingState message="Carregando histórico..." />
-        ) : (
-          <HistoryList history={history} />
-        )}
-      </div>
+      {uid && <HistorySection key={uid} uid={uid} />}
       </div>
     </div>
   );

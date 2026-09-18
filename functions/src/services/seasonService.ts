@@ -65,6 +65,8 @@ export async function transitionSeason(uid: string | null, seasonId: string, act
         throw new HttpsError('failed-precondition', 'A temporada não está ativa.');
       if (!uid && today <= season.endDate) return { success: false };
       const members = await tx.get(groupRef.collection('members'));
+      const postRef = db.collection('feed').doc(`season_${seasonId}`);
+      const existingPost = await tx.get(postRef);
       const podium = officialPodium(members.docs.map(m => m.data() as GroupMember), seasonId);
       tx.update(ref, { active: false, status: 'closed', closedAt: now, podium });
       tx.update(groupRef, { activeSeasonId: null, updatedAt: now });
@@ -74,12 +76,17 @@ export async function transitionSeason(uid: string | null, seasonId: string, act
           name: `${winner.rank}º lugar • ${season.name}`, description: `Pódio oficial: ${winner.points} pontos.`,
           icon: ['🥇', '🥈', '🥉'][winner.rank - 1], unlockedAt: now });
       });
-      const postId = `season_${seasonId}`;
-      tx.create(db.collection('feed').doc(postId), { id: postId, groupId: season.groupId,
+      const postId = postRef.id;
+      const post = { id: postId, groupId: season.groupId,
         userId: season.createdBy || group.data()?.ownerId, userNickname: 'Temporadas', userAvatarUrl: null,
         type: 'season_closed', title: `🏆 ${season.name} encerrada!`,
         message: podium.length ? podium.map(w => `${w.rank}º: ${w.nickname} (${w.points} pontos)`).join(' • ') : 'Temporada encerrada sem participantes com estudo registrado.',
-        metadata: { seasonId, podium }, likeCount: 0, commentCount: 0, createdAt: now });
+        metadata: { seasonId, podium } };
+      if (existingPost.exists) {
+        tx.update(postRef, post);
+      } else {
+        tx.create(postRef, { ...post, likeCount: 0, commentCount: 0, createdAt: now });
+      }
     }
     return { success: true };
   });

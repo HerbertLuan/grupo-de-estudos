@@ -3,7 +3,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { DailyStudy, TimeSeriesPoint, UserProfile, UserStatsSummary } from '../types';
 import { calculateLevel, getEffectiveStreak } from './gamificationService';
 import { getZonedDateString, getDateRange } from '../utils/timezone';
-import { format, subDays } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -56,8 +56,11 @@ export async function getUserStats(uid: string): Promise<UserStatsResult> {
   const levelInfo = calculateLevel(totalStudySeconds);
 
   // Gera dados dos últimos 7 dias (incluindo dias com 0 horas)
-  const now = new Date();
-  const date7DaysAgo = format(subDays(now, 6), 'yyyy-MM-dd');
+  // Deriva toda a janela da data já convertida para o fuso da aplicação.
+  // Usar `new Date()` diretamente aqui deslocava a janela quando o runtime UTC
+  // da Cloud Function já estava no dia seguinte em relação a São Paulo.
+  const today = parseISO(todayStr);
+  const date7DaysAgo = format(subDays(today, 6), 'yyyy-MM-dd');
   const dates7 = getDateRange(date7DaysAgo, todayStr);
 
   const last7Days: TimeSeriesPoint[] = dates7.map((dateStr) => {
@@ -72,7 +75,7 @@ export async function getUserStats(uid: string): Promise<UserStatsResult> {
   });
 
   // Gera dados dos últimos 30 dias
-  const date30DaysAgo = format(subDays(now, 29), 'yyyy-MM-dd');
+  const date30DaysAgo = format(subDays(today, 29), 'yyyy-MM-dd');
   const dates30 = getDateRange(date30DaysAgo, todayStr);
 
   const last30Days: TimeSeriesPoint[] = dates30.map((dateStr) => {
@@ -116,15 +119,14 @@ export async function getUserStats(uid: string): Promise<UserStatsResult> {
  */
 export async function getUserHistory(
   uid: string,
-  limit: number = 30
+  limit: number | null = 30
 ): Promise<DailyStudy[]> {
-  const dailySnap = await db
+  const query = db
     .collection('users')
     .doc(uid)
     .collection('dailyStudy')
-    .orderBy('date', 'desc')
-    .limit(limit)
-    .get();
+    .orderBy('date', 'desc');
+  const dailySnap = await (limit === null ? query : query.limit(limit)).get();
 
   return dailySnap.docs.map((d) => d.data() as DailyStudy);
 }

@@ -66,6 +66,11 @@ export interface StudySession {
   endedAt?: Timestamp | null | any;
   accumulatedSeconds: number;
   totalSeconds: number;
+  subjectId?: string | null;
+  didQuestions?: boolean | null;
+  questionCount?: number | null;
+  correctCount?: number | null;
+  detailsRecorded?: boolean;
   createdAt?: Timestamp | any;
   updatedAt?: Timestamp | any;
 }
@@ -240,10 +245,8 @@ export interface UserStatsSummary {
 
 export interface TimeSeriesPoint {
   date: string;
-  dateStr?: string;
   studySeconds: number;
   studyHours: number;
-  hours?: number;
   pointEarned: boolean;
 }
 

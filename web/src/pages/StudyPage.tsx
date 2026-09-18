@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useStudyTimer } from '../hooks/useStudyTimer';
 import { useTimerSettings } from '../hooks/useTimerSettings';
@@ -11,6 +11,7 @@ import { DailyProgress } from '../components/study/DailyProgress';
 import { PointCelebration } from '../components/study/PointCelebration';
 import { MidnightModal } from '../components/study/MidnightModal';
 import { PhaseTransitionModal } from '../components/study/PhaseTransitionModal';
+import { SessionDetailsModal } from '../components/study/SessionDetailsModal';
 import { StreakBadge } from '../components/ui/StreakBadge';
 import { useToast } from '../components/ui/Toast';
 import { mapFirebaseError } from '../utils/errors';
@@ -24,8 +25,24 @@ function getGreeting(name: string): string {
   return `Boa noite, ${name}! 🌙`;
 }
 
+const completionKey = (uid: string) => `pending-study-completion:${uid}`;
+
+function readPendingCompletion(uid?: string): { sessionId: string; celebration: FinishSessionResult | null } | null {
+  if (!uid) return null;
+  try {
+    const saved = sessionStorage.getItem(completionKey(uid));
+    if (!saved) return null;
+    const parsed = JSON.parse(saved);
+    return typeof parsed?.sessionId === 'string' && parsed.sessionId
+      ? { sessionId: parsed.sessionId, celebration: parsed.celebration ?? null }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export const StudyPage: React.FC = () => {
-  const { profile } = useAuthContext();
+  const { profile, user } = useAuthContext();
   const { showToast } = useToast();
 
   // ── Configurações do timer ────────────────────────────────────────────────
@@ -37,10 +54,30 @@ export const StudyPage: React.FC = () => {
 
   const { totalSecondsToday, pointEarnedToday } = useTodayStudy();
 
-  const [celebrationData, setCelebrationData] = useState<FinishSessionResult | null>(null);
+  const [celebrationData, setCelebrationData] = useState<FinishSessionResult | null>(() => readPendingCompletion(user?.uid)?.celebration ?? null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [detailsSessionId, setDetailsSessionId] = useState<string | null>(() => readPendingCompletion(user?.uid)?.sessionId ?? null);
+  const lastAutoHandledId = useRef<string | null>(null);
   const [showMidnight, setShowMidnight] = useState(false);
   const [currentDate, setCurrentDate] = useState(getTodayDateString());
+
+  const queueSessionDetails = useCallback((result: FinishSessionResult) => {
+    const celebration = result.pointEarnedNow ? result : null;
+    if (user) {
+      try { sessionStorage.setItem(completionKey(user.uid), JSON.stringify({ sessionId: result.sessionId, celebration })); }
+      catch { /* O modal continua aberto nesta navegação mesmo sem storage. */ }
+    }
+    setDetailsSessionId(result.sessionId);
+    setCelebrationData(celebration);
+  }, [user]);
+
+  const closeSessionDetails = useCallback(() => {
+    if (user) {
+      try { sessionStorage.removeItem(completionKey(user.uid)); } catch { /* sem storage */ }
+    }
+    setDetailsSessionId(null);
+    if (celebrationData) setShowCelebration(true);
+  }, [user, celebrationData]);
 
   // ── Solicitar permissão de notificação na primeira interação ──────────────
   useEffect(() => {
@@ -55,15 +92,14 @@ export const StudyPage: React.FC = () => {
   // ── Celebração automática ao fim de ciclo de foco (modo Temporizador) ───────
   useEffect(() => {
     const result = timer.lastAutoFinishResult;
-    if (!result) return;
-    if (result.pointEarnedNow) {
-      setCelebrationData(result);
-      setShowCelebration(true);
-    } else {
+    if (!result || lastAutoHandledId.current === result.sessionId) return;
+    lastAutoHandledId.current = result.sessionId;
+    queueSessionDetails(result);
+    if (!result.pointEarnedNow) {
       const minutes = Math.floor(result.sessionSeconds / 60);
       showToast(`Foco concluído! ${minutes}min de estudo salvos.`, 'success');
     }
-  }, [timer.lastAutoFinishResult, showToast]);
+  }, [timer.lastAutoFinishResult, showToast, queueSessionDetails]);
 
   // ── Detectar mudança de fase e emitir notificações ────────────────────────
   useEffect(() => {
@@ -122,17 +158,15 @@ export const StudyPage: React.FC = () => {
     }
     const result = await timer.finish();
     if (result) {
-      if (result.pointEarnedNow) {
-        setCelebrationData(result);
-        setShowCelebration(true);
-      } else {
+      queueSessionDetails(result);
+      if (!result.pointEarnedNow) {
         const minutes = Math.floor(result.sessionSeconds / 60);
         showToast(`Sessão finalizada! ${minutes}min estudados.`, 'success');
       }
     } else if (timer.error) {
       showToast(mapFirebaseError(timer.error), 'error');
     }
-  }, [timer, showToast]);
+  }, [timer, showToast, queueSessionDetails]);
 
   const handleDiscard = useCallback(async () => {
     try {
@@ -250,9 +284,10 @@ export const StudyPage: React.FC = () => {
       )}
 
       {/* ── Modais ─────────────────────────────────────────────────────────── */}
+      <SessionDetailsModal sessionId={detailsSessionId} onClose={closeSessionDetails} />
       <PointCelebration
         show={showCelebration}
-        onClose={() => setShowCelebration(false)}
+        onClose={() => { setShowCelebration(false); setCelebrationData(null); }}
         streak={celebrationData?.currentStreak ?? 0}
         totalPoints={celebrationData?.totalPoints ?? 0}
         newBadgesCount={celebrationData?.newBadgesCount ?? 0}
@@ -265,7 +300,7 @@ export const StudyPage: React.FC = () => {
 
       {/* Modal de transição de fase (apenas modo timer) */}
       <PhaseTransitionModal
-        status={showCelebration ? 'idle' : timer.status}
+        status={showCelebration || !!detailsSessionId ? 'idle' : timer.status}
         onStartBreak={timer.startBreak}
         onSkipBreak={timer.skipBreak}
         onStartFocus={handleStartFocusAfterBreak}

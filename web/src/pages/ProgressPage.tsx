@@ -3,32 +3,19 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { useStats } from '../hooks/useStats';
 import { LevelProgress } from '../components/profile/LevelProgress';
 import { StatsCard } from '../components/profile/StatsCard';
-import { StudyChart } from '../components/progress/StudyChart';
-import { HistoryList } from '../components/progress/HistoryList';
+import { HistorySection } from '../components/progress/HistorySection';
+import { SubjectProgress } from '../components/progress/SubjectProgress';
 import { LoadingState } from '../components/ui/LoadingState';
 import { ErrorState } from '../components/ui/ErrorState';
-import { getUserHistory } from '../services/statsService';
-import type { DailyStudy } from '../types';
 import { formatDuration } from '../utils/formatTime';
 
 export const ProgressPage: React.FC = () => {
   const { user } = useAuthContext();
   const { stats, loading, error, fetchStats } = useStats();
-  const [history, setHistory] = React.useState<DailyStudy[]>([]);
-  const [historyLoading, setHistoryLoading] = React.useState(false);
 
   const loadData = useCallback(async () => {
     if (!user) return;
     await fetchStats(user.uid);
-    setHistoryLoading(true);
-    try {
-      const h = await getUserHistory(user.uid, 30);
-      setHistory(h);
-    } catch {
-      // non-critical
-    } finally {
-      setHistoryLoading(false);
-    }
   }, [user, fetchStats]);
 
   useEffect(() => {
@@ -39,7 +26,7 @@ export const ProgressPage: React.FC = () => {
   if (error) return <ErrorState message={error} onRetry={loadData} />;
   if (!stats) return null;
 
-  const { summary, timeSeries } = stats;
+  const { summary } = stats;
 
   return (
     <div className="p-4 pb-28 max-w-2xl mx-auto w-full space-y-6">
@@ -104,23 +91,9 @@ export const ProgressPage: React.FC = () => {
         />
       </div>
 
-      {/* Charts */}
-      {timeSeries.last7Days.length > 0 && (
-        <StudyChart data={timeSeries.last7Days} title="Últimos 7 dias" />
-      )}
-      {timeSeries.last30Days.length > 0 && (
-        <StudyChart data={timeSeries.last30Days} title="Últimos 30 dias" />
-      )}
-
-      {/* History list */}
-      <div>
-        <h2 className="text-lg font-bold text-text-primary mb-3">Histórico Detalhado</h2>
-        {historyLoading ? (
-          <LoadingState message="Carregando histórico..." />
-        ) : (
-          <HistoryList history={history} />
-        )}
-      </div>
+      {/* Subject indicators, charts and sessions */}
+      <SubjectProgress />
+      {user && <HistorySection key={user.uid} uid={user.uid} />}
     </div>
   );
 };
