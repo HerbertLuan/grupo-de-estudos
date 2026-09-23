@@ -69,7 +69,16 @@ Nenhuma nova dependência de runtime foi adicionada. O build passou de um arquiv
 - Revisão do diff: serviços, hooks, tipos, Firebase, AuthContext e backend permanecem sem alterações.
 - Browser QA: login/cadastro, entrada/criação de grupo, dashboard, ranking, perfil/edição, progresso de outro estudante, feed, menu mobile, comentários, matérias, administração, temporadas e gráficos de progresso (incluindo modal e troca de período). Formulários e telas observados em larguras de 320, 390, 768, 1366 e 1440 px; checagens de overflow horizontal nas telas mobile. Modal de comentários verificado com Tab, Escape e restauração do foco.
 
-O QA autenticado usa exclusivamente o projeto emulado `demo-estuda-junto-redesign` com o seed que já existia no repositório. Esses registros são fixtures locais de teste; não foram introduzidos dados estáticos no frontend nem alterados dados de produção. Não houve deploy, push ou merge.
+O QA autenticado local usou exclusivamente o projeto emulado `demo-estuda-junto-redesign` com o seed que já existia no repositório. Esses registros são fixtures locais de teste; não foram introduzidos dados estáticos no frontend nem alterados dados de produção.
+
+## Publicação e validação em homologação — 23/09/2026
+
+- Publicado somente Firebase Hosting no projeto `grupo-de-estudos-homologacao`, usando `npm --prefix web run build:homolog` e `firebase deploy --only hosting -P homologacao --non-interactive`. URL: https://grupo-de-estudos-homologacao.web.app/.
+- O build em modo homologação passou e aponta para o projeto Firebase de homologação com emuladores desativados. O lint passou sem erros, mantendo 19 avisos já registrados. Functions, regras e dados de produção não foram publicados ou modificados; não houve push nem merge.
+- No endereço público, o usuário autenticado carregou dashboard, ranking, temporadas, progresso, matérias, feed, perfil, edição e administração. O ranking geral exibiu 11 participantes e o pódio; o perfil de progresso de Maria abriu pela lista. O feed exibiu posts reais, comentários em painel e fechamento por Escape com retorno do foco.
+- Uma sessão de Maria já autenticada no domínio alternativo `firebaseapp.com` foi redirecionada de `/login` para o dashboard, confirmando o guard. O envio de credenciais em um login novo e o cadastro não foram repetidos no ambiente publicado.
+- O cronômetro em homologação iniciou, pausou, retomou e descartou uma sessão curta de teste. O dashboard voltou a `00:00:00` com confirmação de descarte. Não foi criada sessão de estudo salva para testar a finalização; o ciclo completo de conclusão permanece sem validação no ambiente publicado.
+- Navegação mobile pelo menu “Mais” até temporadas confirmada. No feed a 390 px e em temporadas a 320, 768 e 1440 px, a largura do documento não excedeu a viewport. A página desktop de temporadas foi inspecionada visualmente. Nenhum erro de console foi capturado na aba de validação.
 
 ## Problemas anteriores registrados, sem correção funcional
 
