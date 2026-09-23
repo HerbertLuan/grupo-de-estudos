@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useStudyTimer } from '../hooks/useStudyTimer';
 import { useTimerSettings } from '../hooks/useTimerSettings';
 import { useTimerNotification } from '../hooks/useTimerNotification';
 import { useTodayStudy } from '../hooks/useTodayStudy';
+import { useRanking } from '../hooks/useRanking';
 import { StudyTimer } from '../components/study/StudyTimer';
 import { TimerControls } from '../components/study/TimerControls';
 import { TimerModeSelector } from '../components/study/TimerModeSelector';
@@ -17,13 +20,17 @@ import { StreakBadge } from '../components/ui/StreakBadge';
 import { useToast } from '../components/ui/Toast';
 import { mapFirebaseError } from '../utils/errors';
 import { getTodayDateString } from '../utils/formatDate';
-import type { FinishSessionResult } from '../types';
+import { formatDuration } from '../utils/formatTime';
+import { Badge, Card, Icon, PageHeader, StatCard } from '../components/ui/DesignSystem';
+import { db } from '../firebase/config';
+import type { FinishSessionResult, Season } from '../types';
+import './study-redesign.css';
 
 function getGreeting(name: string): string {
   const hour = new Date().getHours();
-  if (hour < 12) return `Bom dia, ${name}! 🌅`;
-  if (hour < 18) return `Boa tarde, ${name}! ☀️`;
-  return `Boa noite, ${name}! 🌙`;
+  if (hour < 12) return `Bom dia, ${name}.`;
+  if (hour < 18) return `Boa tarde, ${name}.`;
+  return `Boa noite, ${name}.`;
 }
 
 const completionKey = (uid: string) => `pending-study-completion:${uid}`;
@@ -54,6 +61,22 @@ export const StudyPage: React.FC = () => {
   const timer = useStudyTimer(settings);
 
   const { totalSecondsToday, pointEarnedToday } = useTodayStudy();
+  const ranking = useRanking(profile?.groupId ?? null);
+  const [activeSeason, setActiveSeason] = useState<Season | null>(null);
+  const [seasonLoading, setSeasonLoading] = useState(true);
+  const [seasonError, setSeasonError] = useState(false);
+
+  const { fetchRanking } = ranking;
+  useEffect(() => { void fetchRanking(); }, [fetchRanking]);
+  useEffect(() => {
+    if (!profile?.groupId) return;
+    return onSnapshot(query(collection(db, 'seasons'), where('groupId', '==', profile.groupId)), snapshot => {
+      const seasons = snapshot.docs.map(item => ({ ...item.data(), id: item.id } as Season));
+      setActiveSeason(seasons.find(season => season.active) ?? null);
+      setSeasonLoading(false);
+      setSeasonError(false);
+    }, () => { setSeasonLoading(false); setSeasonError(true); });
+  }, [profile?.groupId]);
 
   const [celebrationData, setCelebrationData] = useState<FinishSessionResult | null>(() => readPendingCompletion(user?.uid)?.celebration ?? null);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -211,89 +234,62 @@ export const StudyPage: React.FC = () => {
     timer.status !== 'phase_end_break';
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-full p-4 pb-28 max-w-lg mx-auto w-full">
-      {/* Header */}
-      <div className="w-full flex justify-between items-center mb-6 mt-2">
-        <div>
-          <h1 className="text-xl font-bold text-text-primary">
-            {profile ? getGreeting(profile.name.split(' ')[0]) : 'Olá! 👋'}
-          </h1>
-          {profile?.nickname && (
-            <p className="text-sm text-text-muted">@{profile.nickname}</p>
-          )}
-        </div>
-        <StreakBadge streak={profile?.currentStreak ?? 0} size="md" />
-      </div>
+    <div className={`ej-page study-workspace ${isFocusActive ? 'study-workspace--active' : ''}`}>
+      <PageHeader eyebrow="SEU ESPAÇO DE FOCO" title={profile ? getGreeting(profile.name.split(' ')[0]) : 'Vamos estudar.'}
+        description="Disciplina hoje. Conquistas amanhã. Um estudo de cada vez."
+        actions={<StreakBadge streak={profile?.currentStreak ?? 0} size="md" />} />
 
-      {/* Seletor de modo — visível apenas quando idle/phase_end */}
-      {!selectorDisabled && (
-        <div className="w-full mb-4">
-          <TimerModeSelector
-            settings={settings}
-            onUpdate={updateSettings}
-            disabled={selectorDisabled}
-          />
-        </div>
-      )}
-
-      {/* Timer Card */}
-      <div className="w-full bg-bg-secondary rounded-3xl border border-border flex flex-col items-center justify-center mb-4 overflow-hidden">
-        <StudyTimer
-          elapsedSeconds={timer.elapsedSeconds}
-          remainingSeconds={timer.remainingSeconds}
-          status={timer.status}
-          timerMode={currentMode}
-          timerPhase={timer.timerPhase}
-          focusDurationSeconds={currentFocusSeconds}
-          breakDurationSeconds={settings.breakDurationSeconds}
-        />
-        <div className="w-full px-4 pb-4">
-          <DailyProgress
-            totalSecondsToday={totalSecondsToday}
-            pointEarned={pointEarnedToday}
-            elapsedSeconds={focusElapsed}
-            isActive={isFocusActive}
-          />
-        </div>
-      </div>
-
-      {/* Controles */}
-      <div className="w-full">
-        <TimerControls
-          status={timer.status}
-          timerMode={currentMode}
-          isLoading={timer.isLoading}
-          onStart={handleStart}
-          onPause={handlePause}
-          onResume={handleResume}
-          onFinish={handleFinish}
-          onDiscard={handleDiscard}
-          onSkipBreak={timer.skipBreak}
-        />
-      </div>
-
-      {/* Erro */}
-      {timer.error && timer.status === 'idle' && (
-        <p className="mt-4 text-sm text-accent-danger text-center px-4">
-          {mapFirebaseError(timer.error)}
-        </p>
-      )}
-
-      {/* Quick stats */}
-      {profile && (
-        <div className="w-full mt-6 grid grid-cols-2 gap-3">
-          <div className="bg-bg-secondary rounded-2xl p-4 border border-border text-center">
-            <p className="text-2xl font-bold text-text-primary">{profile.totalPoints}</p>
-            <p className="text-xs text-text-muted mt-1">Pontos totais</p>
+      <div className="study-workspace-grid">
+        <section className="study-focus-panel" aria-label="Sua sessão de estudo">
+          <div className="study-focus-heading">
+            <span className="study-kicker"><Icon name="study" size={17} /> Hora de fazer acontecer</span>
+            <span className="study-focus-number" aria-hidden="true">01 / FOCO</span>
           </div>
-          <div className="bg-bg-secondary rounded-2xl p-4 border border-border text-center">
-            <p className="text-2xl font-bold text-text-primary">
-              {Math.floor(profile.totalStudySeconds / 3600)}h
-            </p>
-            <p className="text-xs text-text-muted mt-1">Horas de estudo</p>
+          {!selectorDisabled && <TimerModeSelector settings={settings} onUpdate={updateSettings} disabled={selectorDisabled} />}
+          <StudyTimer elapsedSeconds={timer.elapsedSeconds} remainingSeconds={timer.remainingSeconds}
+            status={timer.status} timerMode={currentMode} timerPhase={timer.timerPhase}
+            focusDurationSeconds={currentFocusSeconds} breakDurationSeconds={settings.breakDurationSeconds} />
+          <TimerControls status={timer.status} timerMode={currentMode} isLoading={timer.isLoading}
+            onStart={handleStart} onPause={handlePause} onResume={handleResume} onFinish={handleFinish}
+            onDiscard={handleDiscard} onSkipBreak={timer.skipBreak} />
+          {timer.error && timer.status === 'idle' && <p role="alert" className="study-timer-error">{mapFirebaseError(timer.error)}</p>}
+          <div className="study-focus-footer"><span className="study-focus-line" />
+            {timer.status === 'active' ? 'Seu próximo passo começa neste momento.' : timer.status === 'paused' ? 'Uma pausa também faz parte. Volte no seu ritmo.' : 'Menos distração. Mais direção.'}
           </div>
+        </section>
+
+        <aside className="study-context">
+          <Card className="study-today-card">
+            <div className="study-card-heading"><h2>Seu dia, em progresso</h2><Icon name="progress" size={18} /></div>
+            <div className="study-today-value">{formatDuration(totalSecondsToday + focusElapsed)}<span>de estudo hoje</span></div>
+            <DailyProgress totalSecondsToday={totalSecondsToday} pointEarned={pointEarnedToday} elapsedSeconds={focusElapsed} isActive={isFocusActive} />
+            <Link to="/progress" className="study-text-link">Explorar meu progresso <Icon name="arrow" size={16} /></Link>
+          </Card>
+          <Card className="study-season-card">
+            <div className="study-card-heading"><span className="study-kicker">Na mesma direção</span><Icon name="seasons" size={19} /></div>
+            {seasonLoading ? <p role="status" className="text-sm text-text-muted">Carregando temporada...</p> : seasonError ? <p className="text-sm text-text-secondary">Não foi possível carregar a temporada.</p> : activeSeason ? <>
+              <Badge tone="yellow">Temporada em andamento</Badge>
+              <h2>{activeSeason.name}</h2>
+              <p className="text-sm text-text-secondary">{activeSeason.startDate.split('-').reverse().join('/')} — {activeSeason.endDate.split('-').reverse().join('/')}</p>
+            </> : <><h2>O próximo ciclo vem aí.</h2><p className="text-sm text-text-secondary">Ainda não há temporada ativa. Seu progresso continua contando.</p></>}
+            <Link to="/seasons" className="study-text-link">Ver temporadas <Icon name="arrow" size={16} /></Link>
+          </Card>
+        </aside>
+      </div>
+
+      {profile && <section className="study-overview" aria-label="Resumo da sua jornada">
+        <div className="study-section-heading"><h2>Cada esforço conta.</h2><Link to="/profile" className="study-text-link">Minha jornada <Icon name="arrow" size={16} /></Link></div>
+        <div className="study-stats-grid">
+          <StatCard label="Tempo total" value={formatDuration(profile.totalStudySeconds)} detail="Conhecimento acumulado" icon={<Icon name="study" />} />
+          <StatCard label="Pontos conquistados" value={profile.totalPoints} detail="Um dia de cada vez" tone="yellow" icon={<Icon name="bolt" />} />
+          <StatCard label="No ranking geral" value={ranking.loading ? '…' : ranking.error ? '—' : ranking.entries.find(entry => entry.uid === user?.uid)?.rank ? `${ranking.entries.find(entry => entry.uid === user?.uid)?.rank}º` : '—'} detail={ranking.error ? 'Ranking indisponível agora' : ranking.totalMembers ? `Entre ${ranking.totalMembers} estudantes` : 'Sua posição no grupo'} icon={<Icon name="ranking" />} />
         </div>
-      )}
+      </section>}
+
+      <section className="study-next-steps" aria-label="Continue sua jornada">
+        <Link to="/subjects"><span className="study-shortcut-icon"><Icon name="subjects" /></span><span><strong>Organize suas matérias</strong><small>Seu estudo, com direção.</small></span><Icon name="arrow" size={18} /></Link>
+        <Link to="/feed"><span className="study-shortcut-icon"><Icon name="feed" /></span><span><strong>Evolua em comunidade</strong><small>Compartilhe cada conquista.</small></span><Icon name="arrow" size={18} /></Link>
+      </section>
 
       {/* ── Modais ─────────────────────────────────────────────────────────── */}
       <SessionDetailsModal sessionId={detailsSessionId} onClose={closeSessionDetails} />

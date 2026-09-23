@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Season } from '../../types';
+import { Badge, Icon } from '../ui/DesignSystem';
 
 interface SeasonHeroProps {
   season: Season | null;
@@ -42,7 +43,7 @@ function remainingLabel(endDate: string, timezone: string): string {
 export function SeasonHero({ season, upcomingSeason, loading, timezone = 'America/Sao_Paulo' }: SeasonHeroProps) {
   if (loading) {
     return (
-      <section aria-label="Carregando temporada ativa" className="relative overflow-hidden rounded-2xl border border-border bg-bg-secondary p-5 sm:p-6">
+      <section aria-label="Carregando temporada ativa" aria-busy="true" className="season-hero season-hero--loading">
         <div className="h-4 w-28 animate-pulse rounded bg-bg-tertiary" />
         <div className="mt-4 h-7 w-3/4 animate-pulse rounded bg-bg-tertiary" />
         <div className="mt-3 h-4 w-52 animate-pulse rounded bg-bg-tertiary" />
@@ -54,66 +55,54 @@ export function SeasonHero({ season, upcomingSeason, loading, timezone = 'Americ
     if (upcomingSeason) {
       const daysUntilStart = Math.max(0, calendarDistance(upcomingSeason.startDate, timezone));
       return (
-        <section className="relative overflow-hidden rounded-2xl border border-accent-primary/30 bg-gradient-to-br from-accent-primary/15 via-bg-secondary to-bg-secondary p-5 shadow-lg shadow-black/10 sm:p-6">
-          <div aria-hidden="true" className="absolute -right-7 -top-9 text-8xl opacity-[0.07] sm:text-9xl">🚀</div>
-          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <span className="inline-flex rounded-full border border-accent-primary/30 bg-accent-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-accent-primary-hover">Próxima temporada</span>
-              <h2 className="mt-3 text-xl font-extrabold text-text-primary sm:text-2xl">{upcomingSeason.name}</h2>
-              <p className="mt-1 text-sm text-text-secondary">
-                {formatBrazilianDate(upcomingSeason.startDate)} <span className="mx-1 text-text-muted">até</span> {formatBrazilianDate(upcomingSeason.endDate)}
-              </p>
-              <Link to="/seasons" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent-primary-hover hover:text-text-primary">
-                Ver detalhes <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-            <div className="min-w-36 self-start rounded-2xl border border-accent-primary/25 bg-bg-primary/55 px-5 py-4 text-center sm:self-center">
-              {daysUntilStart === 0 ? (
-                <><div className="text-2xl font-black text-accent-primary-hover">Hoje</div><div className="mt-1 text-xs font-semibold uppercase tracking-wide text-text-secondary">é a largada</div></>
-              ) : (
-                <><div className="text-4xl font-black leading-none text-accent-primary-hover">{daysUntilStart}</div><div className="mt-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">{daysUntilStart === 1 ? 'dia para iniciar' : 'dias para iniciar'}</div></>
-              )}
-            </div>
+        <section className="season-hero season-hero--upcoming">
+          <div className="season-hero__content">
+            <Badge tone="blue">Próxima temporada</Badge>
+            <h2>{upcomingSeason.name}</h2>
+            <p>Um novo ciclo para transformar dedicação em conquista.</p>
+            <span className="season-hero__dates">{formatBrazilianDate(upcomingSeason.startDate)} <span>até</span> {formatBrazilianDate(upcomingSeason.endDate)}</span>
+            <Link to="/seasons" className="season-hero__link">Conhecer a temporada <Icon name="arrow" size={16} /></Link>
+          </div>
+          <div className="season-hero__countdown">
+            <Icon name="seasons" size={23} />
+            <strong>{daysUntilStart === 0 ? 'Hoje' : daysUntilStart}</strong>
+            <span>{daysUntilStart === 0 ? 'é a largada' : daysUntilStart === 1 ? 'dia para iniciar' : 'dias para iniciar'}</span>
           </div>
         </section>
       );
     }
     return (
-      <section className="rounded-2xl border border-dashed border-border bg-bg-secondary p-5 sm:p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <span className="text-3xl" aria-hidden="true">🏁</span>
-            <h2 className="mt-2 text-xl font-bold text-text-primary">Nenhuma temporada ativa</h2>
-            <p className="mt-1 max-w-lg text-sm text-text-secondary">Ainda não há um novo ciclo programado. Enquanto isso, seus pontos gerais continuam sendo registrados.</p>
-          </div>
-          <Link to="/seasons" className="shrink-0 rounded-xl border border-border bg-bg-tertiary px-4 py-2.5 text-center text-sm font-semibold text-text-primary transition-colors hover:border-accent-primary">
-            Ver temporadas
-          </Link>
+      <section className="season-hero season-hero--empty">
+        <div className="season-hero__content">
+          <span className="ranking-eyebrow">Entre um ciclo e outro</span>
+          <h2>A próxima conquista começa agora.</h2>
+          <p>Nenhuma temporada ativa no momento. Continue estudando: seus pontos gerais continuam sendo registrados.</p>
+          <Link to="/seasons" className="season-hero__link">Explorar temporadas <Icon name="arrow" size={16} /></Link>
         </div>
+        <span className="season-hero__emblem" aria-hidden="true"><Icon name="seasons" size={48} /></span>
       </section>
     );
   }
 
+  const startDistance = calendarDistance(season.startDate, timezone);
+  const endDistance = calendarDistance(season.endDate, timezone);
+  const duration = endDistance - startDistance + 1;
+  const progress = duration > 0 ? Math.max(0, Math.min(100, Math.round((1 - startDistance) / duration * 100))) : 0;
+
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-accent-warning/30 bg-gradient-to-br from-accent-warning/15 via-bg-secondary to-accent-primary/10 p-5 shadow-lg shadow-black/10 sm:p-6">
-      <div aria-hidden="true" className="absolute -right-7 -top-9 text-8xl opacity-[0.08] sm:text-9xl">🏆</div>
-      <div className="relative">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-accent-success/15 px-3 py-1 text-xs font-bold uppercase tracking-wide text-accent-success">
-            <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-accent-success" />
-            Temporada ativa
-          </span>
-          <span className="rounded-full border border-accent-warning/25 bg-bg-primary/40 px-3 py-1 text-xs font-semibold text-accent-warning">
-            {remainingLabel(season.endDate, timezone)}
-          </span>
-        </div>
-        <h2 className="mt-4 max-w-xl text-2xl font-extrabold leading-tight text-text-primary sm:text-3xl">{season.name}</h2>
-        <p className="mt-2 text-sm font-medium text-text-secondary sm:text-base">
-          {formatBrazilianDate(season.startDate)} <span className="mx-1 text-text-muted">até</span> {formatBrazilianDate(season.endDate)}
-        </p>
-        <Link to="/seasons" className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-accent-primary-hover hover:text-text-primary">
-          Histórico e detalhes <span aria-hidden="true">→</span>
-        </Link>
+    <section className="season-hero season-hero--active">
+      <div className="season-hero__content">
+        <div className="season-hero__badges"><Badge tone="yellow">Temporada ativa</Badge><span>{remainingLabel(season.endDate, timezone)}</span></div>
+        <h2>{season.name}</h2>
+        <p>Seu esforço de hoje. A conquista de todo um ciclo.</p>
+        <span className="season-hero__dates">{formatBrazilianDate(season.startDate)} <span>até</span> {formatBrazilianDate(season.endDate)}</span>
+        <Link to="/seasons" className="season-hero__link">Histórico e detalhes <Icon name="arrow" size={16} /></Link>
+      </div>
+      <div className="season-hero__progress">
+        <span className="season-hero__emblem" aria-hidden="true"><Icon name="ranking" size={40} /></span>
+        <div className="season-hero__progress-label"><span>Período decorrido</span><strong>{progress}%</strong></div>
+        <div className="season-hero__track" role="progressbar" aria-label="Período decorrido da temporada" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${progress}%` }} /></div>
+        <span className="season-hero__progress-note">Finalize suas sessões antes do encerramento.</span>
       </div>
     </section>
   );

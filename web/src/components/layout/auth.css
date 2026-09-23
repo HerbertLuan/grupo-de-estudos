@@ -1,0 +1,42 @@
+.ej-auth { min-height:100dvh; display:grid; grid-template-columns:minmax(0,1.08fr) minmax(440px,1fr); }
+.ej-auth-brand { position:relative; overflow:hidden; background:#0b1b3b; padding:44px clamp(32px,5vw,84px); display:flex; flex-direction:column; min-height:100dvh; }
+.ej-auth-brand>.brand-logo { width:135px; }
+.ej-auth-brand .ej-brand-angle { width:450px; right:-240px; bottom:-150px; opacity:.3; border-width:45px; }
+.ej-auth-manifesto { position:relative; margin-block:auto; padding-block:65px; z-index:1; }
+.ej-auth-manifesto h2 { font-size:clamp(36px,4.4vw,66px); line-height:1.08; font-weight:800; max-width:540px; margin-top:24px; }
+.ej-auth-manifesto h2 span { color:#6a9cfa; }
+.ej-auth-manifesto>p:last-child { color:#b4c3db; max-width:335px; font-size:14px; line-height:1.8; margin-top:25px; }
+.ej-auth-values { display:flex; align-items:center; gap:14px; border-top:1px solid #2a4061; padding-top:24px; font-size:9px; text-transform:uppercase; letter-spacing:.15em; color:#acbdd7; }
+.ej-auth-values span+span::before { content:' / '; color:#f4c415; margin-right:14px; }
+.ej-auth-form-side { padding:44px clamp(24px,4vw,76px); display:flex; flex-direction:column; justify-content:center; }
+.ej-auth-mobile-logo { display:none; }
+.ej-auth-form { width:100%; max-width:390px; margin:auto; }
+.ej-auth-form>.ej-eyebrow { margin-bottom:13px; }
+.ej-auth-form h1 { font-size:30px; font-weight:750; margin-bottom:10px; }
+.ej-auth-intro { color:#aabdd8; line-height:1.7; font-size:13px; margin-bottom:30px; }
+.ej-field { margin-bottom:18px; }
+.ej-field label { display:block; font-size:12px; font-weight:600; color:#d4dff0; margin-bottom:8px; }
+.ej-field input { width:100%; border:1px solid #304562; border-radius:8px; padding:13px 14px; color:#f4f6fa; background:#0e1e38; font-size:14px; transition:border-color var(--ej-transition); }
+.ej-field input:hover { border-color:#4a6386; }
+.ej-field-note { color:#93a7c5; font-size:11px; margin-top:7px; }
+.ej-password { position:relative; }
+.ej-password input { padding-right:66px; }
+.ej-password button { position:absolute; top:2px; right:3px; height:44px; padding:0 10px; color:#abc4f0; font-size:10px; font-weight:600; }
+.ej-auth-submit { width:100%; margin-top:8px; min-height:48px; justify-content:space-between; padding-inline:18px; }
+.ej-form-error { background:#ff8d9c0d; border:1px solid #ff8d9c40; border-radius:8px; color:#ffadb8; font-size:12px; line-height:1.6; padding:12px 14px; margin-bottom:20px; }
+.ej-auth-switch { border-top:1px solid #24354e; margin-top:28px; padding-top:24px; color:#aabdd8; font-size:12px; text-align:center; }
+.ej-auth-switch a { color:#8fb3ff; font-weight:600; margin-left:5px; }
+.ej-auth-footer { color:#8195b3; text-align:center; font-size:10px; margin-top:36px; }
+.ej-group-tabs { display:flex; padding:4px; gap:4px; border:1px solid #2a3f5d; border-radius:9px; background:#0b192e; margin-bottom:26px; }
+.ej-group-tabs button { flex:1; font-size:11px; min-height:44px; border-radius:6px; padding:8px; }
+.ej-group-tabs button[aria-pressed="true"] { background:#203b68; color:white; }
+@media(max-width:1023px) { .ej-auth { grid-template-columns:.9fr 1fr; } .ej-auth-brand { padding-inline:28px; } .ej-auth-manifesto h2 { font-size:42px; } .ej-auth-values { gap:8px; letter-spacing:.05em; font-size:8px; flex-wrap:wrap; } .ej-auth-values span+span::before { margin-right:8px; } }
+@media(max-width:639px) {
+ .ej-auth { display:block; } .ej-auth-brand { display:none; }
+ .ej-auth-form-side { padding:28px 24px; min-height:100dvh; justify-content:flex-start; }
+ .ej-auth-mobile-logo { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; }
+ .ej-auth-mobile-logo .brand-logo { width:96px; }
+ .ej-auth-mobile-logo>span:last-child { color:#94acd1; font-size:9px; line-height:1.7; text-align:right; }
+ .ej-auth-form { margin-block:auto; padding-block:4px; } .ej-auth-form h1 { font-size:29px; }
+ .ej-auth-intro { margin-bottom:27px; } .ej-auth-footer { margin-top:36px; } .ej-field input { font-size:16px; }
+}

@@ -38,28 +38,28 @@ export const StudyChart: React.FC<StudyChartProps> = ({ data, title }) => {
       <div className="flex-1 w-full min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A2A38" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
             <XAxis
               dataKey={DATE_KEY}
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#9CA3AF', fontSize: 12 }}
+              tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
               dy={10}
               tickFormatter={formatDate}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#9CA3AF', fontSize: 12 }}
+              tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
               tickFormatter={(v) => `${v}h`}
               width={38}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: '#252530' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-bg-tertiary)' }} />
             <Bar dataKey={HOURS_KEY} radius={[4, 4, 0, 0]} maxBarSize={40}>
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry.pointEarned ? '#22C55E' : '#6366F1'}
+                  fill={entry.pointEarned ? '#F4C415' : '#2F63E8'}
                 />
               ))}
             </Bar>

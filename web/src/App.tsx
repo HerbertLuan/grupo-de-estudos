@@ -1,22 +1,23 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoadingState } from './components/ui/LoadingState';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { JoinGroupPage } from './pages/JoinGroupPage';
-import { StudyPage } from './pages/StudyPage';
-import { RankingPage } from './pages/RankingPage';
-import { SeasonsPage } from './pages/SeasonsPage';
-import { ProgressPage } from './pages/ProgressPage';
-import { FeedPage } from './pages/FeedPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { EditProfilePage } from './pages/EditProfilePage';
-import { UserProgressPage } from './pages/UserProgressPage';
-import { SubjectsPage } from './pages/SubjectsPage';
-import { AdminPage } from './pages/AdminPage';
+const LoginPage = lazy(() => import('./pages/LoginPage').then(module => ({ default: module.LoginPage })));
+const RegisterPage = lazy(() => import('./pages/RegisterPage').then(module => ({ default: module.RegisterPage })));
+const JoinGroupPage = lazy(() => import('./pages/JoinGroupPage').then(module => ({ default: module.JoinGroupPage })));
+const StudyPage = lazy(() => import('./pages/StudyPage').then(module => ({ default: module.StudyPage })));
+const RankingPage = lazy(() => import('./pages/RankingPage').then(module => ({ default: module.RankingPage })));
+const SeasonsPage = lazy(() => import('./pages/SeasonsPage').then(module => ({ default: module.SeasonsPage })));
+const ProgressPage = lazy(() => import('./pages/ProgressPage').then(module => ({ default: module.ProgressPage })));
+const FeedPage = lazy(() => import('./pages/FeedPage').then(module => ({ default: module.FeedPage })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(module => ({ default: module.ProfilePage })));
+const EditProfilePage = lazy(() => import('./pages/EditProfilePage').then(module => ({ default: module.EditProfilePage })));
+const UserProgressPage = lazy(() => import('./pages/UserProgressPage').then(module => ({ default: module.UserProgressPage })));
+const SubjectsPage = lazy(() => import('./pages/SubjectsPage').then(module => ({ default: module.SubjectsPage })));
+const AdminPage = lazy(() => import('./pages/AdminPage').then(module => ({ default: module.AdminPage })));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading, profile, user } = useAuthContext();
@@ -115,7 +116,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
-          <AppRoutes />
+          <MotionConfig reducedMotion="user"><Suspense fallback={<LoadingState fullPage message="Preparando seu espaço…" />}><AppRoutes /></Suspense></MotionConfig>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>

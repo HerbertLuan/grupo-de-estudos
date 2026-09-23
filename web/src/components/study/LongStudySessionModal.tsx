@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Badge } from '../ui/DesignSystem';
+import { useDialogA11y } from '../ui/Dialog';
 
 interface Props {
   reviewRequired: boolean;
@@ -14,13 +16,16 @@ interface Props {
 export function LongStudySessionModal({ reviewRequired, checkInDue, capSeconds, busy, error,
   onConfirm, onFinish, onResolve }: Props) {
   const [minutes, setMinutes] = useState(() => String(Math.max(0, Math.floor(((capSeconds || 3 * 3600 + 30 * 60) - 30 * 60) / 60))));
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(dialogRef, reviewRequired || checkInDue);
   if (!reviewRequired && !checkInDue) return null;
   const maxMinutes = Math.floor((capSeconds || 3 * 3600 + 30 * 60) / 60);
   const parsedMinutes = Number(minutes);
   const valid = Number.isSafeInteger(parsedMinutes) && parsedMinutes >= 0 && parsedMinutes <= maxMinutes;
 
-  return <div role="dialog" aria-modal="true" aria-labelledby="long-session-title" className="fixed inset-0 z-[70] flex items-center justify-center bg-bg-primary/90 p-4 backdrop-blur-sm">
-    <div className="w-full max-w-md space-y-4 rounded-2xl border border-border bg-bg-secondary p-5 shadow-2xl">
+  return <div className="ej-dialog-backdrop z-[70]">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="long-session-title" tabIndex={-1} className="ej-dialog study-modal-surface max-w-md space-y-4">
+      <Badge tone="yellow">{reviewRequired ? 'Revisão da sessão' : 'Check-in de foco'}</Badge>
       <div><h2 id="long-session-title" className="text-xl font-bold">Você ainda está estudando?</h2>
         <p className="mt-2 text-sm text-text-secondary">{reviewRequired
           ? 'A sessão passou 30 minutos sem confirmação após o aviso de 3 horas. O tempo parou de contar. Informe quanto você estudou de fato antes de continuar.'

@@ -5,6 +5,8 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { getSubjectChartData, type SubjectChartData } from '../../services/subjectService';
 import { subjectColor } from '../../utils/subjectColor';
 import { formatDuration } from '../../utils/formatTime';
+import { CommunityDialog } from '../feed/CommunityDialog';
+import { Icon } from '../ui/DesignSystem';
 
 type Kind = 'hours' | 'questions';
 type Period = '7' | '30' | '90' | 'all' | 'custom';
@@ -12,7 +14,7 @@ type Grouping = 'day' | 'week' | 'month';
 type Point = Record<string, string | number> & { label: string; range: string; correct: number; errors: number };
 
 const dateLabel = (date: string) => format(parseISO(date), 'dd/MM');
-const chartBox = 'bg-bg-secondary border border-border rounded-2xl p-4';
+const chartBox = 'progress-chart-card bg-bg-secondary border border-border rounded-xl';
 
 export function ProgressCharts({ uid, subjectId: controlledSubjectId, onSubjectChange, showSubjectFilter = true }: {
   uid?: string;
@@ -97,24 +99,24 @@ export function ProgressCharts({ uid, subjectId: controlledSubjectId, onSubjectC
   function chart(kind: Kind, points: Point[], categories: typeof compact.categories, large: boolean) {
     const bars = kind === 'hours' ? categories.map(category =>
       <Bar key={category.id} dataKey={category.key} name={category.name} fill={category.color} stackId="hours" maxBarSize={44} />)
-      : <><Bar dataKey="correct" name="Acertos" fill="#22c55e" stackId="questions" maxBarSize={44} /><Bar dataKey="errors" name="Erros" fill="#ef4444" stackId="questions" maxBarSize={44} /></>;
+      : <><Bar dataKey="correct" name="Acertos" fill="#6A9CFA" stackId="questions" maxBarSize={44} /><Bar dataKey="errors" name="Erros" fill="#D89662" stackId="questions" maxBarSize={44} /></>;
     return <div className={large ? 'h-80 w-full' : 'h-52 w-full'}><ResponsiveContainer width="100%" height="100%"><BarChart data={points} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
-      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A2A38" />
-      <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} interval="preserveStartEnd" />
-      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} width={44} allowDecimals={kind === 'hours'} tickFormatter={value => kind === 'hours' ? `${Math.round(Number(value) / 3600 * 10) / 10}h` : String(value)} />
+      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+      <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} interval="preserveStartEnd" />
+      <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} width={44} allowDecimals={kind === 'hours'} tickFormatter={value => kind === 'hours' ? `${Math.round(Number(value) / 3600 * 10) / 10}h` : String(value)} />
       <Tooltip content={({ active, payload, label }) => active && payload?.length ? <div className="bg-bg-tertiary border border-border p-3 rounded-lg shadow-xl text-sm"><p className="font-semibold mb-1">{label}</p>{payload.map(item => <p key={String(item.dataKey)} style={{ color: item.color }}>{item.name}: {kind === 'hours' ? formatDuration(Number(item.value)) : item.value}</p>)}</div> : null} />
       {bars}
     </BarChart></ResponsiveContainer></div>;
   }
 
   function legend(kind: Kind, categories: typeof compact.categories) {
-    const items = kind === 'hours' ? categories.map(item => ({ name: item.name, color: item.color })) : [{ name: 'Acertos', color: '#22c55e' }, { name: 'Erros', color: '#ef4444' }];
+    const items = kind === 'hours' ? categories.map(item => ({ name: item.name, color: item.color })) : [{ name: 'Acertos', color: '#6A9CFA' }, { name: 'Erros', color: '#D89662' }];
     return <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-text-secondary">{items.map(item => <span key={item.name} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: item.color }} />{item.name}</span>)}</div>;
   }
 
   function card(kind: Kind) {
     const title = kind === 'hours' ? 'Horas estudadas' : 'Questões';
-    return <div className={chartBox}><button type="button" onClick={() => open(kind)} className="w-full text-left" aria-label={`Ampliar gráfico de ${title.toLowerCase()}`}><div className="flex justify-between items-center mb-3"><h3 className="font-semibold">{title}</h3><span className="text-xs text-accent-primary">Últimos 7 dias · Ampliar ↗</span></div></button>
+    return <div className={chartBox}><button type="button" onClick={() => open(kind)} className="w-full text-left" aria-label={`Ampliar gráfico de ${title.toLowerCase()}`}><div className="progress-chart-heading"><div><h3>{title}</h3><span>Últimos 7 dias</span></div><Icon name="arrow" size={18} /></div></button>
       <div role="button" tabIndex={0} aria-label={`Ampliar gráfico de ${title.toLowerCase()}`} onClick={() => open(kind)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(kind); } }}>{chart(kind, compact.points, compact.categories, false)}</div>
       {legend(kind, compact.categories)}</div>;
   }
@@ -122,13 +124,12 @@ export function ProgressCharts({ uid, subjectId: controlledSubjectId, onSubjectC
   return <>
     {showSubjectFilter && <label className="block text-sm">Matéria<select aria-label="Filtrar matéria dos gráficos" className="block w-full mt-1 p-3 rounded-xl bg-bg-secondary border border-border" value={subjectId} onChange={e => (onSubjectChange || setLocalSubjectId)(e.target.value)}><option value="all">Todas</option><option value="others">Outros</option>{data?.subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>}
     {error && <p role="alert" className="text-accent-danger">{error}</p>}
-    {!data && !error ? <p className="text-text-secondary">Carregando gráficos...</p> : data && <div className="space-y-4">{card('hours')}{card('questions')}</div>}
-    {modal && data && <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3" onMouseDown={event => { if (event.target === event.currentTarget) setModal(null); }}><div role="dialog" aria-modal="true" aria-label={`Gráfico de ${modal === 'hours' ? 'horas estudadas' : 'questões'}`} className="bg-bg-primary border border-border rounded-2xl p-4 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-      <div className="flex justify-between items-center gap-3 mb-4"><h2 className="text-xl font-bold">{modal === 'hours' ? 'Horas estudadas' : 'Questões'}</h2><button type="button" onClick={() => setModal(null)} aria-label="Fechar gráfico" className="text-2xl text-text-secondary">×</button></div>
+    {!data && !error ? <p className="text-text-secondary">Carregando gráficos...</p> : data && <div className="progress-charts-grid">{card('hours')}{card('questions')}</div>}
+    {modal && data && <CommunityDialog open title={modal === 'hours' ? 'Horas estudadas' : 'Questões'} onClose={() => setModal(null)} wide><div className="p-5 sm:p-6">
       <div className="flex flex-wrap gap-2 mb-4" aria-label="Filtrar período">{([['7', '7 dias'], ['30', '30 dias'], ['90', '90 dias'], ['all', 'Todo o histórico'], ['custom', 'Intervalo personalizado']] as const).map(([value, label]) => <button key={value} type="button" onClick={() => changePeriod(value)} aria-pressed={period === value} className={`px-3 py-2 rounded-lg text-sm border ${period === value ? 'bg-accent-primary text-white border-accent-primary' : 'border-border'}`}>{label}</button>)}</div>
       {period === 'custom' && <div className="flex flex-wrap gap-3 mb-4"><label className="text-sm">De<input type="date" value={start} max={end || today} onChange={e => setStart(e.target.value)} className="block mt-1 p-2 rounded-lg bg-bg-secondary border border-border" /></label><label className="text-sm">Até<input type="date" value={end} min={start} max={today} onChange={e => setEnd(e.target.value)} className="block mt-1 p-2 rounded-lg bg-bg-secondary border border-border" /></label></div>}
       {allowGrouping && <label className="block text-sm mb-4">Agrupar por<select aria-label="Agrupar dados" className="block mt-1 p-2 rounded-lg bg-bg-secondary border border-border" value={grouping} onChange={e => setGrouping(e.target.value as Grouping)}><option value="day">Dia</option><option value="week">Semana</option><option value="month">Mês</option></select></label>}
       {!validRange ? <p role="alert" className="text-accent-danger">Selecione um intervalo de datas válido.</p> : <>{chart(modal, detailed.points, detailed.categories, true)}{legend(modal, detailed.categories)}</>}
-    </div></div>}
+    </div></CommunityDialog>}
   </>;
 }

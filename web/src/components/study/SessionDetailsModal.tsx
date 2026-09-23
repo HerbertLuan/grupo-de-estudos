@@ -1,7 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { getSubjectSetup, saveSessionDetails, type SubjectSession, type SubjectSetup } from '../../services/subjectService';
 import { subjectColor } from '../../utils/subjectColor';
+import { Badge, Icon } from '../ui/DesignSystem';
+import { useDialogA11y } from '../ui/Dialog';
 
 interface Props { sessionId: string | null; onClose: () => void; initial?: SubjectSession | null }
 
@@ -14,6 +16,8 @@ export function SessionDetailsModal({ sessionId, onClose, initial }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [readySessionId, setReadySessionId] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLFormElement>(null);
+  useDialogA11y(dialogRef, !!sessionId, () => { if (!busy) close(); });
 
   useEffect(() => {
     if (!sessionId) return;
@@ -66,11 +70,11 @@ export function SessionDetailsModal({ sessionId, onClose, initial }: Props) {
   const optionCard = 'flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors focus-within:outline-2 focus-within:outline-accent-primary';
   const selectedCard = 'border-accent-primary bg-accent-primary/10';
   const unselectedCard = 'border-border bg-bg-secondary hover:border-accent-primary/60';
-  return <div role="dialog" aria-modal="true" aria-labelledby="session-details-title" className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-bg-primary/85 p-4 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget && !busy) close(); }}>
-    <form onSubmit={save} className="max-h-[min(90dvh,800px)] w-full max-w-lg space-y-6 overflow-y-auto rounded-2xl border border-border bg-bg-primary p-5 shadow-2xl sm:p-6">
+  return <div className="ej-dialog-backdrop z-[60]" onClick={e => { if (e.target === e.currentTarget && !busy) close(); }}>
+    <form ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="session-details-title" tabIndex={-1} onSubmit={save} className="ej-dialog study-modal-surface max-w-lg space-y-6">
       <div className="flex items-start justify-between gap-4">
-        <div><h2 id="session-details-title" className="text-2xl font-bold">{initial ? 'Editar sessão' : 'Como foi seu estudo?'}</h2><p className="mt-1 text-sm text-text-secondary">{initial ? 'Corrija a matéria ou as questões registradas.' : 'Sessão salva. Complete os detalhes para acompanhar seu progresso.'}</p></div>
-        <button type="button" aria-label="Fechar" onClick={close} disabled={busy} className="rounded-lg px-2 text-2xl leading-none text-text-secondary hover:text-text-primary focus-visible:outline-2 focus-visible:outline-accent-primary">×</button>
+        <div><Badge tone="blue">{initial ? 'Sua jornada' : 'Sessão salva'}</Badge><h2 id="session-details-title" className="mt-3 text-2xl font-bold">{initial ? 'Editar sessão' : 'Como foi seu estudo?'}</h2><p className="mt-2 text-sm leading-relaxed text-text-secondary">{initial ? 'Corrija a matéria ou as questões registradas.' : 'Complete os detalhes para acompanhar sua evolução.'}</p></div>
+        <button type="button" aria-label="Fechar" onClick={close} disabled={busy} className="ej-icon-button shrink-0"><Icon name="close" size={19} /></button>
       </div>
 
       <fieldset className="space-y-3"><legend className="mb-3 font-semibold">Matéria estudada</legend>
@@ -91,7 +95,7 @@ export function SessionDetailsModal({ sessionId, onClose, initial }: Props) {
             {selected && <span aria-hidden="true" className="text-accent-primary">✓</span>}
           </label>;
         })}
-        {!mySubjects.length && <p className="text-sm text-text-secondary">Sua lista está vazia. Escolha matérias do grupo para vê-las aqui.</p>}
+        {!setup && !error ? <p role="status" className="text-sm text-text-muted">Carregando suas matérias...</p> : !mySubjects.length && <p className="text-sm text-text-secondary">Sua lista está vazia. Escolha matérias do grupo para vê-las aqui.</p>}
         {!initial && <Link to="/subjects" className="inline-block text-sm font-medium text-accent-primary underline underline-offset-2">Gerenciar minhas matérias</Link>}
       </fieldset>
 

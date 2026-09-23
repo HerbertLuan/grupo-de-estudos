@@ -141,18 +141,18 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
   }
 
   return (
-    <div className="w-full">
+    <div className="study-mode-selector">
       {/* Toggle de modo */}
-      <div className="flex items-center bg-bg-tertiary rounded-2xl p-1 mb-4">
+      <div className="study-mode-tabs">
         {(['stopwatch', 'timer'] as TimerMode[]).map(m => (
           <button
             key={m}
-            id={`timer-mode-${m}`}
+            id={`timer-mode-${m}`} aria-pressed={settings.mode === m}
             type="button"
             disabled={disabled}
             onClick={() => handleModeChange(m)}
             className={`
-              relative flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200
+              relative flex-1 py-3 rounded-lg text-sm font-semibold transition-colors duration-200
               disabled:opacity-50 disabled:cursor-not-allowed
               ${settings.mode === m
                 ? 'text-white'
@@ -162,12 +162,12 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
             {settings.mode === m && (
               <motion.div
                 layoutId="mode-pill"
-                className="absolute inset-0 bg-accent-primary rounded-xl shadow-lg"
+                className="study-mode-active"
                 transition={{ type: 'spring', stiffness: 380, damping: 32 }}
               />
             )}
             <span className="relative z-10 flex items-center justify-center gap-1.5">
-              {m === 'stopwatch' ? '⏱' : '⏰'}
+
               {m === 'stopwatch' ? 'Cronômetro' : 'Temporizador'}
             </span>
           </button>
@@ -185,12 +185,12 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
             transition={{ duration: 0.25, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="bg-bg-tertiary rounded-2xl p-4 flex flex-col gap-5">
+            <div className="study-mode-settings">
 
               {/* Foco */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-accent-primary mb-2.5">
-                  🎯 Tempo de Foco
+                  Tempo de foco
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {FOCUS_PRESETS.map(p => {
@@ -203,7 +203,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                         disabled={disabled}
                         onClick={() => handleFocusPreset(p.minutes)}
                         className={`
-                          px-3 py-1.5 rounded-lg text-sm font-medium border transition-all duration-150
+                          min-h-11 px-3 py-2 rounded-lg text-sm font-medium border transition-colors duration-150
                           disabled:opacity-50 disabled:cursor-not-allowed
                           ${isActive
                             ? 'bg-accent-primary/20 border-accent-primary text-accent-primary font-semibold'
@@ -220,7 +220,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                     disabled={disabled}
                     onClick={handleCustomFocusClick}
                     className={`
-                      px-3 py-1.5 rounded-lg text-sm font-medium border transition-all duration-150
+                      min-h-11 px-3 py-2 rounded-lg text-sm font-medium border transition-colors duration-150
                       disabled:opacity-50 disabled:cursor-not-allowed
                       ${isCustomFocus
                         ? 'bg-accent-primary/20 border-accent-primary text-accent-primary font-semibold'
@@ -245,12 +245,12 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                           aria-label="Diminuir 1 minuto de foco"
                           onClick={() => handleFocusStep(-1)}
                           disabled={disabled || (parseInt(focusInputVal, 10) || currentFocusMin) <= 1}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-text-secondary hover:bg-bg-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed text-base font-bold transition-colors"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg text-text-secondary hover:bg-bg-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed text-base font-bold transition-colors"
                         >
                           −
                         </button>
                         <input
-                          id="custom-focus-minutes"
+                          id="custom-focus-minutes" aria-label="Duração do foco em minutos"
                           type="number"
                           min={1}
                           max={240}
@@ -265,7 +265,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                           aria-label="Aumentar 1 minuto de foco"
                           onClick={() => handleFocusStep(1)}
                           disabled={disabled || (parseInt(focusInputVal, 10) || currentFocusMin) >= 240}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-text-secondary hover:bg-bg-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed text-base font-bold transition-colors"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg text-text-secondary hover:bg-bg-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed text-base font-bold transition-colors"
                         >
                           +
                         </button>
@@ -280,7 +280,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
               {/* Intervalo */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-accent-success mb-2.5">
-                  ☕ Tempo de Intervalo
+                  Tempo de intervalo
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {BREAK_PRESETS.map(p => {
@@ -293,7 +293,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                         disabled={disabled}
                         onClick={() => handleBreakPreset(p.minutes)}
                         className={`
-                          px-3 py-1.5 rounded-lg text-sm font-medium border transition-all duration-150
+                          min-h-11 px-3 py-2 rounded-lg text-sm font-medium border transition-colors duration-150
                           disabled:opacity-50 disabled:cursor-not-allowed
                           ${isActive
                             ? 'bg-accent-success/20 border-accent-success text-accent-success font-semibold'
@@ -310,7 +310,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                     disabled={disabled}
                     onClick={handleCustomBreakClick}
                     className={`
-                      px-3 py-1.5 rounded-lg text-sm font-medium border transition-all duration-150
+                      min-h-11 px-3 py-2 rounded-lg text-sm font-medium border transition-colors duration-150
                       disabled:opacity-50 disabled:cursor-not-allowed
                       ${isCustomBreak
                         ? 'bg-accent-success/20 border-accent-success text-accent-success font-semibold'
@@ -335,12 +335,12 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                           aria-label="Diminuir 1 minuto de intervalo"
                           onClick={() => handleBreakStep(-1)}
                           disabled={disabled || (parseInt(breakInputVal, 10) || currentBreakMin) <= 1}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-text-secondary hover:bg-bg-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed text-base font-bold transition-colors"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg text-text-secondary hover:bg-bg-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed text-base font-bold transition-colors"
                         >
                           −
                         </button>
                         <input
-                          id="custom-break-minutes"
+                          id="custom-break-minutes" aria-label="Duração do intervalo em minutos"
                           type="number"
                           min={1}
                           max={60}
@@ -355,7 +355,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                           aria-label="Aumentar 1 minuto de intervalo"
                           onClick={() => handleBreakStep(1)}
                           disabled={disabled || (parseInt(breakInputVal, 10) || currentBreakMin) >= 60}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-text-secondary hover:bg-bg-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed text-base font-bold transition-colors"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg text-text-secondary hover:bg-bg-tertiary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed text-base font-bold transition-colors"
                         >
                           +
                         </button>

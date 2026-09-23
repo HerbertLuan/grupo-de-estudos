@@ -10,6 +10,7 @@ import { BadgeCard } from '../components/profile/BadgeCard';
 import { LoadingState } from '../components/ui/LoadingState';
 import { DEFAULT_LEVELS } from '../constants/levels';
 import { formatDuration } from '../utils/formatTime';
+import { Badge, Card, Icon } from '../components/ui/DesignSystem';
 
 export const ProfilePage: React.FC = () => {
   const { user, profile } = useAuthContext();
@@ -56,88 +57,32 @@ export const ProfilePage: React.FC = () => {
   });
 
   return (
-    <div className="pb-28 max-w-2xl mx-auto w-full">
-      {/* Header section */}
-      <div className="p-4 pt-6">
-        <ProfileHeader
-          profile={profile}
-          levelName={currentLevel.name}
-          levelIcon={currentLevel.icon}
-          isCurrentUser={true}
-        />
+    <div className="ej-page space-y-7">
+      <ProfileHeader profile={profile} levelName={currentLevel.name} levelIcon={currentLevel.icon} isCurrentUser={true} />
+      <div className="social-stat-grid social-stat-grid--four">
+        <StatsCard label="Pontos totais" value={profile.totalPoints} icon="🎯" highlight />
+        <StatsCard label="Sequência atual" value={`${profile.currentStreak} dias`} icon="🔥" />
+        <StatsCard label="Maior sequência" value={`${profile.longestStreak} dias`} icon="🏆" />
+        <StatsCard label="Horas estudadas" value={`${Math.floor(profile.totalStudySeconds / 3600)}h`} icon="⏱️" />
       </div>
-
-      <div className="px-4 space-y-6">
-        {/* Level Progress */}
-        <LevelProgress
-          currentLevel={currentLevel}
-          nextLevel={nextLevel}
-          currentSeconds={profile.totalStudySeconds}
-          requiredSecondsForNext={requiredSecondsForNext}
-          progressPercentage={progressPercentage}
-        />
-
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <StatsCard label="Pontos Totais" value={profile.totalPoints} icon="🎯" highlight />
-          <StatsCard label="Streak Atual" value={`${profile.currentStreak} dias`} icon="🔥" />
-          <StatsCard label="Maior Streak" value={`${profile.longestStreak} dias`} icon="🏆" />
-          <StatsCard
-            label="Horas Estudadas"
-            value={`${Math.floor(profile.totalStudySeconds / 3600)}h`}
-            icon="⏱️"
-          />
-          {stats && (
-            <>
-              <StatsCard
-                label="Média Diária"
-                value={formatDuration(stats.summary.dailyAverageSeconds)}
-                icon="📈"
-              />
-              <StatsCard
-                label="Recorde Diário"
-                value={formatDuration(stats.summary.maxDaySeconds)}
-                icon="⚡"
-              />
-            </>
-          )}
-        </div>
-
-        {/* Edit Profile link */}
-        <Link
-          to="/profile/edit"
-          className="block w-full py-3 text-center bg-bg-secondary border border-border rounded-xl text-text-primary font-medium hover:border-accent-primary transition-colors"
-        >
-          ✏️ Editar Perfil
-        </Link>
-
-        {/* Badges section */}
-        <div>
-          <h2 className="text-lg font-bold text-text-primary mb-4">
-            Conquistas 🏅
-            {!badgesLoading && (
-              <span className="ml-2 text-sm text-text-muted font-normal">
-                {earned.length} conquistadas
-              </span>
+      <div className="profile-body">
+        <div className="profile-main">
+          <section>
+            <div className="social-section-title"><div><h2>Seu mural de conquistas</h2><p>Cada marco conta uma parte da sua jornada.</p></div>{!badgesLoading && <Badge tone="yellow">{earned.length} conquistadas</Badge>}</div>
+            {badgesLoading || statsLoading ? <LoadingState message="Carregando conquistas..." /> : (
+              <div className="achievement-grid">
+                {earned.filter(b => b.id.startsWith('season_')).map(b => <article key={b.id} className="achievement-card achievement-card--earned"><div className="achievement-card__symbol" aria-hidden="true">{b.icon}</div><h3>{b.name}</h3><p>{b.description}</p><div className="mt-auto pt-4"><Badge tone="yellow">Temporada</Badge></div></article>)}
+                {catalog.map(badge => <BadgeCard key={badge.id} badge={badge} earned={earnedBadgeIds.has(badge.id)} earnedDate={earnedDateMap[badge.id]} />)}
+              </div>
             )}
-          </h2>
-
-          {badgesLoading || statsLoading ? (
-            <LoadingState message="Carregando conquistas..." />
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {earned.filter(b => b.id.startsWith('season_')).map(b => <div key={b.id} className="p-4 rounded-2xl border border-accent-success/30 bg-bg-secondary text-center"><div className="text-4xl mb-3">{b.icon}</div><h3 className="font-bold text-sm">{b.name}</h3><p className="text-xs text-text-secondary mt-2">{b.description}</p></div>)}
-              {catalog.map(badge => (
-                <BadgeCard
-                  key={badge.id}
-                  badge={badge}
-                  earned={earnedBadgeIds.has(badge.id)}
-                  earnedDate={earnedDateMap[badge.id]}
-                />
-              ))}
-            </div>
-          )}
+          </section>
         </div>
+        <aside className="profile-aside" aria-label="Evolução do estudante">
+          <LevelProgress currentLevel={currentLevel} nextLevel={nextLevel} currentSeconds={profile.totalStudySeconds} requiredSecondsForNext={requiredSecondsForNext} progressPercentage={progressPercentage} />
+          {stats && <div className="social-stat-grid"><StatsCard label="Média diária" value={formatDuration(stats.summary.dailyAverageSeconds)} icon="📈" /><StatsCard label="Recorde diário" value={formatDuration(stats.summary.maxDaySeconds)} icon="⚡" /></div>}
+          <Card className="p-5"><p className="social-eyebrow">Continue evoluindo</p><p className="text-sm leading-relaxed text-text-secondary">Veja como seu tempo e suas matérias se transformam em progresso.</p><Link className="social-link mt-3" to="/progress">Explorar meu progresso <Icon name="arrow" size={16} /></Link></Card>
+          <div className="profile-note"><p>Disciplina hoje.<br /><strong className="text-text-primary">Conquistas amanhã.</strong></p></div>
+        </aside>
       </div>
     </div>
   );

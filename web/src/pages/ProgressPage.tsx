@@ -7,6 +7,7 @@ import { SubjectProgress } from '../components/progress/SubjectProgress';
 import { LoadingState } from '../components/ui/LoadingState';
 import { ErrorState } from '../components/ui/ErrorState';
 import { formatDuration } from '../utils/formatTime';
+import { PageHeader } from '../components/ui/DesignSystem';
 
 export const ProgressPage: React.FC = () => {
   const { user } = useAuthContext();
@@ -28,58 +29,21 @@ export const ProgressPage: React.FC = () => {
   const { summary } = stats;
 
   return (
-    <div className="p-4 pb-28 max-w-2xl mx-auto w-full space-y-6">
-      <h1 className="text-2xl font-bold text-text-primary mt-2">Progresso 📊</h1>
-
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatsCard
-          label="Total de Horas"
-          value={`${summary.totalHours.toFixed(1)}h`}
-          icon="⏱️"
-        />
-        <StatsCard
-          label="Dias Estudados"
-          value={summary.totalDaysStudied}
-          icon="📅"
-        />
-        <StatsCard
-          label="Média Diária"
-          value={formatDuration(summary.dailyAverageSeconds)}
-          icon="📈"
-        />
-        <StatsCard
-          label="Recorde Diário"
-          value={formatDuration(summary.maxDaySeconds)}
-          icon="🔥"
-          highlight
-        />
+    <div className="ej-page space-y-7">
+      <PageHeader eyebrow="Evolução" title="Seu esforço, em perspectiva." description="Acompanhe sua consistência e descubra onde cada hora de estudo faz a diferença." />
+      <div className="social-stat-grid social-stat-grid--four">
+        <StatsCard label="Total de horas" value={`${summary.totalHours.toFixed(1)}h`} icon="⏱️" />
+        <StatsCard label="Dias estudados" value={summary.totalDaysStudied} icon="📅" />
+        <StatsCard label="Média diária" value={formatDuration(summary.dailyAverageSeconds)} icon="📈" />
+        <StatsCard label="Recorde diário" value={formatDuration(summary.maxDaySeconds)} icon="🔥" highlight />
       </div>
-
-      {/* Level progress */}
-      <LevelProgress
-        currentLevel={summary.level.currentLevel}
-        nextLevel={summary.level.nextLevel}
-        currentSeconds={summary.level.currentSeconds}
-        requiredSecondsForNext={summary.level.requiredSecondsForNext}
-        progressPercentage={summary.level.progressPercentage}
-      />
-
-      {/* Historical and season indicators */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatsCard
-          label="Maior Streak"
-          value={`${summary.longestStreak} dias`}
-          icon="🏆"
-        />
-        <StatsCard
-          label="Pontos Temporada"
-          value={summary.seasonPoints}
-          icon="⭐"
-        />
+      <div className="progress-overview">
+        <LevelProgress currentLevel={summary.level.currentLevel} nextLevel={summary.level.nextLevel} currentSeconds={summary.level.currentSeconds} requiredSecondsForNext={summary.level.requiredSecondsForNext} progressPercentage={summary.level.progressPercentage} />
+        <div className="social-stat-grid">
+          <StatsCard label="Maior sequência" value={`${summary.longestStreak} dias`} icon="🏆" />
+          <StatsCard label="Pontos na temporada" value={summary.seasonPoints} icon="⭐" highlight />
+        </div>
       </div>
-
-      {/* Subject indicators, charts and study history */}
       {user && <SubjectProgress uid={user.uid} />}
     </div>
   );

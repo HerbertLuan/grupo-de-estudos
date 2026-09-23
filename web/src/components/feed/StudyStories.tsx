@@ -10,29 +10,14 @@ import { formatRelativeTime } from '../../utils/formatDate';
 import { loadStoryPhoto, preparePhoto, reactToStory, removeStory, STORY_EMOJIS, uploadStory, type Story } from '../../services/storyService';
 import type { GroupMember, UserProfile } from '../../types';
 import './StudyStories.css';
+import { useDialogA11y } from '../ui/Dialog';
 
 type Member = GroupMember & { activeSessionId?: string | null; sessionStatus?: 'active' | 'paused' | null };
 const statusText = (m: Member) => m.activeSessionId ? m.sessionStatus === 'paused' ? 'Sessão pausada ⏸️' : 'Estudando agora 🟢' : 'Parou de estudar ⚫';
 
 function Dialog({ children, close, label, className = '' }: { children: ReactNode; close: () => void; label: string; className?: string }) {
   const element = useRef<HTMLDivElement>(null);
-  const closeRef = useRef(close); useEffect(() => { closeRef.current = close; }, [close]);
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden'; element.current?.focus();
-    const key = (e: KeyboardEvent) => {
-      if (!element.current?.contains(document.activeElement)) return;
-      if (e.key === 'Escape') { e.stopImmediatePropagation(); closeRef.current(); }
-      if (e.key === 'Tab') {
-        const focusable = Array.from(element.current.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]'));
-        const index = focusable.indexOf(document.activeElement as HTMLElement);
-        e.preventDefault(); focusable[(index + (e.shiftKey ? -1 : 1) + focusable.length) % focusable.length]?.focus();
-      }
-    };
-    document.addEventListener('keydown', key);
-    return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', key); previous?.focus(); };
-  }, []);
+  useDialogA11y(element, true, close);
   return createPortal(<div className={`story-overlay ${className}`} ref={element} tabIndex={-1} role="dialog" aria-modal="true" aria-label={label} onClick={e => { if (e.target === e.currentTarget) close(); }}>{children}</div>, document.body);
 }
 

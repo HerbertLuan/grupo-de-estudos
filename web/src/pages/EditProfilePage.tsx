@@ -5,6 +5,8 @@ import { Avatar } from '../components/ui/Avatar';
 import { useToast } from '../components/ui/Toast';
 import { updateProfile, uploadAvatar } from '../services/profileService';
 import { mapFirebaseError } from '../utils/errors';
+import { PageHeader, Card, Button, Icon } from '../components/ui/DesignSystem';
+import '../styles/social-redesign.css';
 
 export const EditProfilePage: React.FC = () => {
   const { user, profile } = useAuthContext();
@@ -67,102 +69,27 @@ export const EditProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 max-w-lg mx-auto w-full pb-28">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6 mt-2">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-text-secondary hover:text-text-primary transition-colors p-1"
-          aria-label="Voltar"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </button>
-        <h1 className="text-2xl font-bold text-text-primary">Editar Perfil</h1>
-      </div>
-
+    <div className="ej-page space-y-6">
+      <PageHeader eyebrow="Seu perfil" title="Sua identidade na comunidade." description="Escolha como você aparece para quem estuda com você." actions={<Button variant="ghost" onClick={() => navigate(-1)}>← Voltar</Button>} />
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Avatar section */}
-        <div className="bg-bg-secondary rounded-2xl border border-border p-6 flex flex-col items-center gap-4">
-          <div className="relative">
-            <Avatar
-              src={avatarPreview}
-              name={name || profile?.name || 'U'}
-              size="xl"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-accent-primary text-white flex items-center justify-center shadow-lg hover:bg-accent-primary-hover transition-colors"
-              aria-label="Alterar foto"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-            </button>
-          </div>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="text-sm font-medium text-accent-primary hover:text-accent-primary-hover transition-colors"
-          >
-            Alterar foto de perfil
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleAvatarChange}
-            className="hidden"
-          />
-          {avatarFile && (
-            <p className="text-xs text-text-muted">
-              Nova foto: {avatarFile.name}
-            </p>
-          )}
+        <div className="edit-profile-layout">
+          <Card className="edit-profile-photo">
+            <Avatar src={avatarPreview} name={name || profile?.name || 'U'} size="xl" />
+            <div><h2 className="font-bold text-sm">Foto de perfil</h2><p className="mt-2 text-xs leading-relaxed text-text-secondary">Uma foto ajuda seu grupo a reconhecer você.</p></div>
+            <Button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}><Icon name="profile" size={16} /> Alterar foto</Button>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" aria-label="Selecionar foto de perfil" />
+            <p className="text-xs text-text-secondary">Imagem de até 5 MB</p>
+            {avatarFile && <p className="text-xs text-text-secondary break-all">Nova foto: {avatarFile.name}</p>}
+          </Card>
+          <Card className="edit-profile-fields">
+            <h2>Informações pessoais</h2><p>Seu nome e apelido aparecem no feed, no ranking e no seu perfil.</p>
+            <div className="space-y-6">
+              <div><label htmlFor="profile-name">Nome de exibição</label><input id="profile-name" type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-bg-primary border border-border rounded-xl px-4 py-3 text-text-primary" placeholder="Seu nome completo" required minLength={2} autoComplete="name" /></div>
+              <div><label htmlFor="profile-nickname">Apelido</label><input id="profile-nickname" type="text" value={`@${profile?.nickname || ''}`} disabled aria-describedby="nickname-help" className="w-full bg-bg-primary border border-border rounded-xl px-4 py-3 text-text-secondary cursor-not-allowed" /><p id="nickname-help" className="text-xs text-text-secondary mt-2">O apelido não pode ser alterado.</p></div>
+            </div>
+          </Card>
         </div>
-
-        {/* Fields */}
-        <div className="bg-bg-secondary rounded-2xl border border-border p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1.5">
-              Nome de Exibição
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-bg-tertiary border border-border rounded-xl px-4 py-3 text-text-primary focus:outline-none focus:border-accent-primary transition-colors"
-              placeholder="Seu nome completo"
-              required
-              minLength={2}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1.5">
-              Apelido
-            </label>
-            <input
-              type="text"
-              value={`@${profile?.nickname || ''}`}
-              disabled
-              className="w-full bg-bg-tertiary/50 border border-border rounded-xl px-4 py-3 text-text-muted cursor-not-allowed"
-            />
-            <p className="text-xs text-text-muted mt-1.5">O apelido não pode ser alterado.</p>
-          </div>
-        </div>
-
-        {/* Save button */}
-        <button
-          type="submit"
-          disabled={isLoading || !name.trim()}
-          className="w-full bg-accent-primary hover:bg-accent-primary-hover text-white font-bold rounded-xl py-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent-primary/25"
-        >
-          {isLoading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
-        </button>
+        <div className="edit-profile-actions"><Button type="button" variant="secondary" onClick={() => navigate('/profile')}>Cancelar</Button><Button type="submit" busy={isLoading} disabled={isLoading || !name.trim()}>{isLoading ? 'Salvando...' : 'Salvar alterações'}</Button></div>
       </form>
     </div>
   );

@@ -11,6 +11,8 @@ import { LoadingState } from '../components/ui/LoadingState';
 import { ErrorState } from '../components/ui/ErrorState';
 import type { UserProfile } from '../types';
 import { formatDuration } from '../utils/formatTime';
+import { PageHeader, Button, Badge } from '../components/ui/DesignSystem';
+import { Avatar } from '../components/ui/Avatar';
 
 export const UserProgressPage: React.FC = () => {
   const { uid } = useParams<{ uid: string }>();
@@ -49,98 +51,24 @@ export const UserProgressPage: React.FC = () => {
   const { summary } = stats;
 
   return (
-    <div className="p-4 pb-28 max-w-2xl mx-auto w-full">
-
-      {/* Back button */}
-      <button
-        onClick={() => navigate('/ranking')}
-        className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors mt-2 mb-4"
-      >
-        <span className="text-lg">←</span>
-        <span>Voltar ao Ranking</span>
-      </button>
-
-      <div className="space-y-6">
-      {/* User header */}
-      <div className="flex items-center gap-4 p-4 bg-bg-secondary rounded-2xl border border-border">
-        <div className="w-14 h-14 rounded-full bg-bg-tertiary flex items-center justify-center text-2xl overflow-hidden flex-shrink-0">
-          {targetUser?.avatarUrl ? (
-            <img src={targetUser.avatarUrl} alt={targetUser.name} className="w-full h-full object-cover" />
-          ) : (
-            <span>👤</span>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-text-primary truncate">
-            {targetUser?.name ?? 'Usuário'}
-          </h1>
-          <span className="text-sm text-text-secondary">@{targetUser?.nickname ?? uid}</span>
-        </div>
+    <div className="ej-page space-y-7">
+      <PageHeader eyebrow="Comunidade / Progresso" title="Uma jornada de evolução." description="Acompanhe o esforço e as conquistas de quem estuda com você." actions={<Button variant="ghost" onClick={() => navigate('/ranking')}>← Voltar ao ranking</Button>} />
+      <section className="student-identity"><div className="student-identity__banner" aria-hidden="true"><span>DISCIPLINA / EVOLUÇÃO / CONQUISTAS</span></div><div className="student-identity__content"><div className="student-identity__avatar"><Avatar src={targetUser?.avatarUrl} name={targetUser?.name ?? 'Usuário'} size="xl" /></div><div className="student-identity__name"><h2 className="text-2xl font-bold">{targetUser?.name ?? 'Usuário'}</h2><p className="mt-1 text-text-secondary">@{targetUser?.nickname ?? uid}</p><div className="mt-3"><Badge tone="purple">{summary.level.currentLevel.name}</Badge></div></div></div></section>
+      <div className="social-stat-grid social-stat-grid--four">
+        <StatsCard label="Total de horas" value={`${summary.totalHours.toFixed(1)}h`} icon="⏱️" />
+        <StatsCard label="Dias estudados" value={summary.totalDaysStudied} icon="📅" />
+        <StatsCard label="Média diária" value={formatDuration(summary.dailyAverageSeconds)} icon="📈" />
+        <StatsCard label="Recorde diário" value={formatDuration(summary.maxDaySeconds)} icon="🔥" highlight />
       </div>
-
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatsCard
-          label="Total de Horas"
-          value={`${summary.totalHours.toFixed(1)}h`}
-          icon="⏱️"
-        />
-        <StatsCard
-          label="Dias Estudados"
-          value={summary.totalDaysStudied}
-          icon="📅"
-        />
-        <StatsCard
-          label="Média Diária"
-          value={formatDuration(summary.dailyAverageSeconds)}
-          icon="📈"
-        />
-        <StatsCard
-          label="Recorde Diário"
-          value={formatDuration(summary.maxDaySeconds)}
-          icon="🔥"
-          highlight
-        />
+      <LevelProgress currentLevel={summary.level.currentLevel} nextLevel={summary.level.nextLevel} currentSeconds={summary.level.currentSeconds} requiredSecondsForNext={summary.level.requiredSecondsForNext} progressPercentage={summary.level.progressPercentage} />
+      <div className="social-stat-grid social-stat-grid--four">
+        <StatsCard label="Sequência atual" value={`${summary.currentStreak} dias`} icon="🔥" />
+        <StatsCard label="Maior sequência" value={`${summary.longestStreak} dias`} icon="🏆" />
+        <StatsCard label="Pontos totais" value={summary.totalPoints} icon="🎯" highlight />
+        <StatsCard label="Pontos na temporada" value={summary.seasonPoints} icon="⭐" />
       </div>
-
-      {/* Level progress */}
-      <LevelProgress
-        currentLevel={summary.level.currentLevel}
-        nextLevel={summary.level.nextLevel}
-        currentSeconds={summary.level.currentSeconds}
-        requiredSecondsForNext={summary.level.requiredSecondsForNext}
-        progressPercentage={summary.level.progressPercentage}
-      />
-
-      {/* Streak & Points */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatsCard
-          label="Streak Atual"
-          value={`${summary.currentStreak} dias`}
-          icon="🔥"
-        />
-        <StatsCard
-          label="Maior Streak"
-          value={`${summary.longestStreak} dias`}
-          icon="🏆"
-        />
-        <StatsCard
-          label="Pontos Totais"
-          value={summary.totalPoints}
-          icon="🎯"
-          highlight
-        />
-        <StatsCard
-          label="Pontos Temporada"
-          value={summary.seasonPoints}
-          icon="⭐"
-        />
-      </div>
-
-      <section className="space-y-4"><h2 className="text-lg font-bold">Progresso por matéria</h2><ProgressCharts uid={uid} /></section>
-
+      <section className="space-y-5 subject-progress"><div className="social-section-title"><div><h2>Progresso por matéria</h2><p>Tempo dedicado e prática de questões ao longo dos dias.</p></div></div><ProgressCharts uid={uid} /></section>
       {uid && <HistorySection key={uid} uid={uid} />}
-      </div>
     </div>
   );
 };

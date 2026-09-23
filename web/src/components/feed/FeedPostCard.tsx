@@ -1,99 +1,32 @@
 import React from 'react';
 import { FeedPost } from '../../types';
 import { formatRelativeTime } from '../../utils/formatTime';
+import { Avatar } from '../ui/Avatar';
+import { Badge } from '../ui/DesignSystem';
+import '../../styles/social-redesign.css';
 
-interface FeedPostCardProps {
-  post: FeedPost;
-  onLike: (postId: string) => void;
-  onComment: (postId: string) => void;
-  onShowLikes?: (postId: string) => void;
-  isLikeLoading?: boolean;
-}
+interface FeedPostCardProps { post: FeedPost; onLike: (postId: string) => void; onComment: (postId: string) => void; onShowLikes?: (postId: string) => void; isLikeLoading?: boolean; }
+const TYPE_LABELS: Record<string, string> = { season_closed: 'Temporada', point_earned: 'Ponto conquistado', badge_unlocked: 'Conquista', streak_milestone: 'Consistência', hours_milestone: 'Evolução', manual_post: 'Comunidade' };
 
-const TYPE_ICONS: Record<string, string> = {
-  season_closed: '🏆',
-  point_earned: '🎯',
-  badge_unlocked: '🏅',
-  streak_milestone: '🔥',
-  hours_milestone: '⏳',
-  manual_post: '📝'
-};
-
-export const FeedPostCard: React.FC<FeedPostCardProps> = ({
-  post,
-  onLike,
-  onComment,
-  onShowLikes,
-  isLikeLoading,
-}) => {
-  const icon = TYPE_ICONS[post.type] || '📌';
-
-  // Compatibilidade defensiva com campos legados (authorAvatarUrl, authorName)
+export const FeedPostCard: React.FC<FeedPostCardProps> = ({ post, onLike, onComment, onShowLikes, isLikeLoading }) => {
   const avatarUrl = post.userAvatarUrl || post.authorAvatarUrl;
   const displayName = post.userNickname || post.authorName || post.authorNickname || 'Usuário';
   const likeCount = post.likesCount ?? post.likeCount ?? 0;
   const commentCount = post.commentsCount ?? post.commentCount ?? 0;
-
   return (
-    <div className="bg-bg-secondary border border-border rounded-2xl p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-bg-tertiary overflow-hidden flex items-center justify-center flex-shrink-0">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-lg">👤</span>
-            )}
-          </div>
-          <div>
-            <div className="font-semibold text-text-primary text-sm">{displayName}</div>
-            <div className="text-xs text-text-secondary">
-              {formatRelativeTime(post.createdAt)} • @{post.userNickname || post.authorNickname || displayName}
-            </div>
-          </div>
-        </div>
-        <div className="text-2xl bg-bg-tertiary w-8 h-8 flex items-center justify-center rounded-full">
-          {icon}
-        </div>
+    <article className="feed-post">
+      <div className="feed-post__header">
+        <div className="feed-post__author"><Avatar src={avatarUrl} name={displayName} /><div className="min-w-0"><h3>{displayName}</h3><p>@{post.userNickname || post.authorNickname || displayName} · {formatRelativeTime(post.createdAt)}</p></div></div>
       </div>
-
-      <div className="mb-4">
-        {post.title && <h4 className="font-bold text-text-primary mb-1">{post.title}</h4>}
-        <p className="text-text-secondary text-sm">{post.content || post.message}</p>
-      </div>
-
-      <div className="flex items-center gap-4 border-t border-border pt-3">
-        <div className="flex items-center gap-1">
-          {/* Botão do coração: alterna curtida */}
-          <button
-            onClick={() => onLike(post.id)}
-            disabled={isLikeLoading}
-            aria-label={post.isLikedByMe ? 'Descurtir' : 'Curtir'}
-            className={`flex items-center justify-center transition-colors disabled:opacity-50 ${
-              post.isLikedByMe ? 'text-accent-danger' : 'text-text-secondary hover:text-accent-danger'
-            }`}
-          >
-            <span>{post.isLikedByMe ? '❤️' : '🤍'}</span>
-          </button>
-          {/* Contador de curtidas: abre modal de quem curtiu */}
-          <button
-            onClick={() => onShowLikes?.(post.id)}
-            disabled={likeCount === 0}
-            aria-label="Ver quem curtiu"
-            className="text-sm text-text-secondary hover:text-accent-primary transition-colors disabled:cursor-default px-1"
-          >
-            {likeCount}
-          </button>
+      <div className="mt-4"><Badge tone={post.type === 'season_closed' || post.type === 'badge_unlocked' ? 'yellow' : 'blue'}>{TYPE_LABELS[post.type] || 'Atividade'}</Badge></div>
+      <div className="feed-post__content">{post.title && <h4>{post.title}</h4>}<p>{post.content || post.message}</p></div>
+      <div className="feed-post__footer">
+        <div className="flex items-center">
+          <button type="button" onClick={() => onLike(post.id)} disabled={isLikeLoading} aria-pressed={Boolean(post.isLikedByMe)} aria-label={post.isLikedByMe ? 'Descurtir' : 'Curtir'}><svg width="20" height="20" viewBox="0 0 24 24" fill={post.isLikedByMe ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0l-1 1-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg></button>
+          <button type="button" onClick={() => onShowLikes?.(post.id)} disabled={likeCount === 0} aria-label={`Ver ${likeCount} curtidas`}>{likeCount} <span className="hidden sm:inline">curtidas</span></button>
         </div>
-
-        <button
-          onClick={() => onComment(post.id)}
-          className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
-        >
-          <span>💬</span>
-          <span>{commentCount}</span>
-        </button>
+        <button type="button" onClick={() => onComment(post.id)} aria-label={`Ver ${commentCount} comentários`}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-2 2V11.5A8.5 8.5 0 0 1 10.5 3h2a8.5 8.5 0 0 1 8.5 8.5Z" /></svg>{commentCount} <span className="hidden sm:inline">comentários</span></button>
       </div>
-    </div>
+    </article>
   );
 };
