@@ -55,17 +55,17 @@ export const UserProgressPage: React.FC = () => {
       <PageHeader eyebrow="Comunidade / Progresso" title="Uma jornada de evolução." description="Acompanhe o esforço e as conquistas de quem estuda com você." actions={<Button variant="ghost" onClick={() => navigate('/ranking')}>← Voltar ao ranking</Button>} />
       <section className="student-identity"><div className="student-identity__banner" aria-hidden="true"><span>DISCIPLINA / EVOLUÇÃO / CONQUISTAS</span></div><div className="student-identity__content"><div className="student-identity__avatar"><Avatar src={targetUser?.avatarUrl} name={targetUser?.name ?? 'Usuário'} size="xl" /></div><div className="student-identity__name"><h2 className="text-2xl font-bold">{targetUser?.name ?? 'Usuário'}</h2><p className="mt-1 text-text-secondary">@{targetUser?.nickname ?? uid}</p><div className="mt-3"><Badge tone="purple">{summary.level.currentLevel.name}</Badge></div></div></div></section>
       <div className="social-stat-grid social-stat-grid--four">
-        <StatsCard label="Total de horas" value={`${summary.totalHours.toFixed(1)}h`} icon="⏱️" />
-        <StatsCard label="Dias estudados" value={summary.totalDaysStudied} icon="📅" />
-        <StatsCard label="Média diária" value={formatDuration(summary.dailyAverageSeconds)} icon="📈" />
-        <StatsCard label="Recorde diário" value={formatDuration(summary.maxDaySeconds)} icon="🔥" highlight />
+        <StatsCard label="Total de horas" value={`${summary.totalHours.toFixed(1)}h`} icon="study" />
+        <StatsCard label="Dias estudados" value={summary.totalDaysStudied} icon="seasons" />
+        <StatsCard label="Média diária" value={formatDuration(summary.dailyAverageSeconds)} icon="progress" />
+        <StatsCard label="Recorde diário" value={formatDuration(summary.maxDaySeconds)} icon="study" highlight />
       </div>
       <LevelProgress currentLevel={summary.level.currentLevel} nextLevel={summary.level.nextLevel} currentSeconds={summary.level.currentSeconds} requiredSecondsForNext={summary.level.requiredSecondsForNext} progressPercentage={summary.level.progressPercentage} />
       <div className="social-stat-grid social-stat-grid--four">
-        <StatsCard label="Sequência atual" value={`${summary.currentStreak} dias`} icon="🔥" />
-        <StatsCard label="Maior sequência" value={`${summary.longestStreak} dias`} icon="🏆" />
-        <StatsCard label="Pontos totais" value={summary.totalPoints} icon="🎯" highlight />
-        <StatsCard label="Pontos na temporada" value={summary.seasonPoints} icon="⭐" />
+        <StatsCard label="Sequência atual" value={`${summary.currentStreak} dias`} icon="bolt" />
+        <StatsCard label="Maior sequência" value={`${summary.longestStreak} dias`} icon="bolt" />
+        <StatsCard label="Pontos totais" value={summary.totalPoints} icon="ranking" highlight />
+        <StatsCard label="Pontos na temporada" value={summary.seasonPoints} icon="ranking" />
       </div>
       <section className="space-y-5 subject-progress"><div className="social-section-title"><div><h2>Progresso por matéria</h2><p>Tempo dedicado e prática de questões ao longo dos dias.</p></div></div><ProgressCharts uid={uid} /></section>
       {uid && <HistorySection key={uid} uid={uid} />}

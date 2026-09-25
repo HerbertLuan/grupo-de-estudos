@@ -14,6 +14,7 @@ import { getLeaderboard } from '../services/rankingService';
 import { db } from '../firebase/config';
 import type { RankingPeriod, LeaderboardEntry, Group, Season } from '../types';
 import './ranking-redesign.css';
+import './ranking-layout.css';
 
 export const RankingPage: React.FC = () => {
   const [period, setPeriod] = useState<RankingPeriod>('season');
@@ -116,15 +117,13 @@ export const RankingPage: React.FC = () => {
   return (
     <div className="ej-page ranking-page">
       <PageHeader
-        eyebrow="Juntos, vamos mais longe"
         title="Ranking"
-        description="Cada sessão conta. Acompanhe sua posição e evolua com o grupo."
         actions={<Link to="/seasons" className="ranking-history-link"><Icon name="seasons" size={18} />Temporadas<Icon name="arrow" size={16} /></Link>}
       />
 
       <div className="ranking-toolbar">
         <RankingTabs activePeriod={period} onPeriodChange={handlePeriodChange} />
-        <span className="ranking-group-label"><Icon name="profile" size={17} />{group?.name || 'Seu grupo'}{!loading && <Badge tone="neutral">{totalMembers} membros</Badge>}</span>
+        <div className="ranking-context"><span className="ranking-group-label"><Icon name="profile" size={17} />{group?.name || 'Seu grupo'}{!loading && <Badge tone="neutral">{totalMembers} membros</Badge>}</span>{period === 'season' && activeSeason && <span className="ranking-season-name">{activeSeason.name}</span>}</div>
       </div>
 
       <div id="ranking-panel" role="tabpanel" aria-labelledby={`ranking-tab-${period}`} className="ranking-panel">
@@ -132,17 +131,16 @@ export const RankingPage: React.FC = () => {
 
         {currentUserEntry && !loading && !seasonUnavailable && (
           <Card className="ranking-personal">
-            <div className="ranking-personal__identity"><Avatar src={currentUserEntry.avatarUrl} name={currentUserEntry.name} size="md" /><div><span className="ranking-eyebrow">Sua jornada {period === 'season' ? 'nesta temporada' : 'até aqui'}</span><h2>O próximo avanço é seu.</h2></div></div>
+            <div className="ranking-personal__identity"><Avatar src={currentUserEntry.avatarUrl} name={currentUserEntry.name} size="sm" /><h2>Sua posição <span>{period === 'season' ? 'na temporada' : 'no ranking geral'}</span></h2></div>
             <dl className="ranking-personal__numbers">
-              <div><dt>Posição</dt><dd>#{currentUserEntry.rank}</dd></div>
+              <div><dt>Sua posição</dt><dd>#{currentUserEntry.rank}</dd></div>
               <div><dt>Pontos</dt><dd>{currentUserEntry.points.toLocaleString('pt-BR')}</dd></div>
               <div><dt>Estudadas</dt><dd>{(currentUserEntry.studySeconds / 3600).toFixed(1)}<small>h</small></dd></div>
             </dl>
-            <Link to="/" className="ranking-personal__cta">Hora de estudar<Icon name="arrow" size={16} /></Link>
           </Card>
         )}
 
-        {period === 'season' && <SeasonHero season={activeSeason} upcomingSeason={upcomingSeason} loading={seasonLoading || (!activeSeason && upcomingSeasonLoading)} timezone={group?.timezone} />}
+        {period === 'season' && (seasonUnavailable || loading || error || entries.length === 0) && <SeasonHero season={activeSeason} upcomingSeason={upcomingSeason} loading={seasonLoading || (!activeSeason && upcomingSeasonLoading)} timezone={group?.timezone} />}
 
         {seasonUnavailable ? null : loading ? (
           <Card className="ranking-loading"><LoadingState message="Buscando a dedicação do grupo..." /></Card>
@@ -155,6 +153,7 @@ export const RankingPage: React.FC = () => {
             entries={entries}
             currentUserId={user?.uid || ''}
             period={period}
+            seasonSummary={period === 'season' ? <SeasonHero season={activeSeason} upcomingSeason={upcomingSeason} loading={seasonLoading || (!activeSeason && upcomingSeasonLoading)} timezone={group?.timezone} /> : undefined}
           />
         )}
       </div>

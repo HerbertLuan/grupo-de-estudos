@@ -9,9 +9,10 @@ interface RankingListProps {
   entries: LeaderboardEntry[];
   currentUserId: string;
   period: RankingPeriod;
+  seasonSummary?: React.ReactNode;
 }
 
-export const RankingList: React.FC<RankingListProps> = ({ entries, currentUserId, period }) => {
+export const RankingList: React.FC<RankingListProps> = ({ entries, currentUserId, period, seasonSummary }) => {
   if (entries.length === 0) {
     return <div className="text-center py-10 text-text-secondary">Nenhum dado disponível para este período.</div>;
   }
@@ -20,10 +21,10 @@ export const RankingList: React.FC<RankingListProps> = ({ entries, currentUserId
   const rest = entries.slice(3);
 
   return (
-    <div className="ranking-leaderboard">
-      <section aria-labelledby="podium-heading">
+    <div className={`ranking-leaderboard ${seasonSummary ? 'ranking-leaderboard--season' : ''}`}>
+      <section className="ranking-podium-section" aria-labelledby="podium-heading">
         <div className="ranking-section-heading">
-          <div><span className="ranking-eyebrow">Cada sessão faz a diferença</span><h2 id="podium-heading">No topo da dedicação</h2></div>
+          <h2 id="podium-heading">No topo do ranking</h2>
           <Badge tone="yellow">Top {top3.length}</Badge>
         </div>
         <ol className="ranking-podium" data-count={top3.length}>
@@ -31,9 +32,9 @@ export const RankingList: React.FC<RankingListProps> = ({ entries, currentUserId
             <li key={entry.uid} className="ranking-podium__item" data-rank={entry.rank}>
               <Link to={`/progress/${entry.uid}`} className={`ranking-podium__card ${entry.uid === currentUserId ? 'is-current' : ''}`}>
                 <span className="ranking-podium__place"><Icon name="ranking" size={16} /> {entry.rank}º lugar</span>
-                <div className="ranking-podium__avatar"><Avatar src={entry.avatarUrl} name={entry.name} size="lg" /></div>
+                <div className="ranking-podium__avatar"><Avatar src={entry.avatarUrl} name={entry.name} size="md" />{entry.uid === currentUserId && <span className="ranking-you">Você</span>}</div>
                 <span className="ranking-podium__name">{entry.name}</span>
-                <span className="ranking-podium__nickname">@{entry.nickname}{entry.uid === currentUserId && <span className="ranking-you">Você</span>}</span>
+                <span className="ranking-podium__nickname">@{entry.nickname}</span>
                 <span className="ranking-podium__score">{entry.points.toLocaleString('pt-BR')}<small>pontos</small></span>
                 <span className="ranking-podium__details">
                   <span>{period === 'all' || period === 'season' ? `${(entry.studySeconds / 3600).toFixed(1)}h estudadas` : entry.levelName}</span>
@@ -45,9 +46,11 @@ export const RankingList: React.FC<RankingListProps> = ({ entries, currentUserId
         </ol>
       </section>
 
+      {seasonSummary && <aside className="ranking-season-summary" aria-label="Detalhes da temporada">{seasonSummary}</aside>}
+
       {rest.length > 0 && (
         <Card className="ranking-table">
-          <div className="ranking-table__heading"><h2>O grupo em movimento</h2><span>{entries.length} participantes no ranking</span></div>
+          <div className="ranking-table__heading"><h2>Classificação</h2><span>{entries.length} participantes no ranking</span></div>
           <div className="ranking-table__columns" aria-hidden="true"><span>Posição</span><span>Estudante</span><span>Pontuação</span></div>
           <ol start={4}>
             {rest.map(entry => <li key={entry.uid}><RankingUserRow entry={entry} isCurrentUser={entry.uid === currentUserId} period={period} /></li>)}

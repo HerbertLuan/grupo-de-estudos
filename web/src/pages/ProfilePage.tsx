@@ -60,10 +60,10 @@ export const ProfilePage: React.FC = () => {
     <div className="ej-page space-y-7">
       <ProfileHeader profile={profile} levelName={currentLevel.name} levelIcon={currentLevel.icon} isCurrentUser={true} />
       <div className="social-stat-grid social-stat-grid--four">
-        <StatsCard label="Pontos totais" value={profile.totalPoints} icon="🎯" highlight />
-        <StatsCard label="Sequência atual" value={`${profile.currentStreak} dias`} icon="🔥" />
-        <StatsCard label="Maior sequência" value={`${profile.longestStreak} dias`} icon="🏆" />
-        <StatsCard label="Horas estudadas" value={`${Math.floor(profile.totalStudySeconds / 3600)}h`} icon="⏱️" />
+        <StatsCard label="Pontos totais" value={profile.totalPoints} icon="ranking" highlight />
+        <StatsCard label="Sequência atual" value={`${profile.currentStreak} dias`} icon="bolt" />
+        <StatsCard label="Maior sequência" value={`${profile.longestStreak} dias`} icon="bolt" />
+        <StatsCard label="Horas estudadas" value={`${Math.floor(profile.totalStudySeconds / 3600)}h`} icon="study" />
       </div>
       <div className="profile-body">
         <div className="profile-main">
@@ -79,7 +79,7 @@ export const ProfilePage: React.FC = () => {
         </div>
         <aside className="profile-aside" aria-label="Evolução do estudante">
           <LevelProgress currentLevel={currentLevel} nextLevel={nextLevel} currentSeconds={profile.totalStudySeconds} requiredSecondsForNext={requiredSecondsForNext} progressPercentage={progressPercentage} />
-          {stats && <div className="social-stat-grid"><StatsCard label="Média diária" value={formatDuration(stats.summary.dailyAverageSeconds)} icon="📈" /><StatsCard label="Recorde diário" value={formatDuration(stats.summary.maxDaySeconds)} icon="⚡" /></div>}
+          {stats && <div className="social-stat-grid"><StatsCard label="Média diária" value={formatDuration(stats.summary.dailyAverageSeconds)} icon="progress" /><StatsCard label="Recorde diário" value={formatDuration(stats.summary.maxDaySeconds)} icon="study" /></div>}
           <Card className="p-5"><p className="social-eyebrow">Continue evoluindo</p><p className="text-sm leading-relaxed text-text-secondary">Veja como seu tempo e suas matérias se transformam em progresso.</p><Link className="social-link mt-3" to="/progress">Explorar meu progresso <Icon name="arrow" size={16} /></Link></Card>
           <div className="profile-note"><p>Disciplina hoje.<br /><strong className="text-text-primary">Conquistas amanhã.</strong></p></div>
         </aside>

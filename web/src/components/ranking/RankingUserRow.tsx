@@ -14,7 +14,7 @@ export const RankingUserRow: React.FC<RankingUserRowProps> = ({ entry, isCurrent
   <Link
     to={`/progress/${entry.uid}`}
     className={`ranking-row ${isCurrentUser ? 'is-current' : ''}`}
-    aria-label={`${entry.rank}º lugar, ${entry.name}${isCurrentUser ? ', você' : ''}, ${entry.points} pontos. Ver perfil`}
+    aria-label={`${entry.rank}º lugar, ${entry.name}${isCurrentUser ? ', você' : ''}, ${entry.points} pontos. Ver progresso`}
   >
     <span className="ranking-row__position">{String(entry.rank).padStart(2, '0')}</span>
     <Avatar src={entry.avatarUrl} name={entry.name} size="md" />

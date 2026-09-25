@@ -281,7 +281,7 @@ export const StudyPage: React.FC = () => {
         <div className="study-section-heading"><h2>Cada esforço conta.</h2><Link to="/profile" className="study-text-link">Minha jornada <Icon name="arrow" size={16} /></Link></div>
         <div className="study-stats-grid">
           <StatCard label="Tempo total" value={formatDuration(profile.totalStudySeconds)} detail="Conhecimento acumulado" icon={<Icon name="study" />} />
-          <StatCard label="Pontos conquistados" value={profile.totalPoints} detail="Um dia de cada vez" tone="yellow" icon={<Icon name="bolt" />} />
+          <StatCard label="Pontos conquistados" value={profile.totalPoints} detail="Um dia de cada vez" tone="yellow" icon={<Icon name="ranking" />} />
           <StatCard label="No ranking geral" value={ranking.loading ? '…' : ranking.error ? '—' : ranking.entries.find(entry => entry.uid === user?.uid)?.rank ? `${ranking.entries.find(entry => entry.uid === user?.uid)?.rank}º` : '—'} detail={ranking.error ? 'Ranking indisponível agora' : ranking.totalMembers ? `Entre ${ranking.totalMembers} estudantes` : 'Sua posição no grupo'} icon={<Icon name="ranking" />} />
         </div>
       </section>}

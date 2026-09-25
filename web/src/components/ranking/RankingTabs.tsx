@@ -7,9 +7,9 @@ interface RankingTabsProps {
   onPeriodChange: (p: RankingPeriod) => void;
 }
 
-const TABS: { id: RankingPeriod; label: string; detail: string }[] = [
-  { id: 'season', label: 'Temporada', detail: 'O ciclo atual' },
-  { id: 'all', label: 'Geral', detail: 'Toda a sua trajetória' },
+const TABS: { id: RankingPeriod; label: string }[] = [
+  { id: 'season', label: 'Temporada' },
+  { id: 'all', label: 'Geral' },
 ];
 
 export const RankingTabs: React.FC<RankingTabsProps> = ({ activePeriod, onPeriodChange }) => (
@@ -34,7 +34,7 @@ export const RankingTabs: React.FC<RankingTabsProps> = ({ activePeriod, onPeriod
         className={`ranking-tabs__tab ${activePeriod === tab.id ? 'is-active' : ''}`}
       >
         <Icon name={tab.id === 'season' ? 'seasons' : 'ranking'} size={19} />
-        <span>{tab.label}<small>{tab.detail}</small></span>
+        <span>{tab.label}</span>
       </button>
     ))}
   </div>
