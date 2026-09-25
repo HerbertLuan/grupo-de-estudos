@@ -155,7 +155,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
               relative flex-1 py-3 rounded-lg text-sm font-semibold transition-colors duration-200
               disabled:opacity-50 disabled:cursor-not-allowed
               ${settings.mode === m
-                ? 'text-white'
+                ? 'text-text-primary'
                 : 'text-text-muted hover:text-text-secondary'}
             `}
           >
@@ -189,7 +189,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
 
               {/* Foco */}
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-accent-primary mb-2.5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ej-blue)] mb-2.5">
                   Tempo de foco
                 </p>
                 <div className="flex gap-2 flex-wrap">
@@ -200,13 +200,14 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                         key={p.label}
                         id={`focus-preset-${p.label.replace(' ', '-')}`}
                         type="button"
+                        aria-pressed={isActive}
                         disabled={disabled}
                         onClick={() => handleFocusPreset(p.minutes)}
                         className={`
                           min-h-11 px-3 py-2 rounded-lg text-sm font-medium border transition-colors duration-150
                           disabled:opacity-50 disabled:cursor-not-allowed
                           ${isActive
-                            ? 'bg-accent-primary/20 border-accent-primary text-accent-primary font-semibold'
+                            ? 'bg-[var(--ej-blue-soft)] border-accent-primary text-[var(--ej-blue)] font-semibold'
                             : 'bg-bg-quaternary border-border text-text-secondary hover:border-accent-primary/50'}
                         `}
                       >
@@ -217,13 +218,14 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                   <button
                     id="focus-preset-Personalizado"
                     type="button"
+                    aria-pressed={isCustomFocus}
                     disabled={disabled}
                     onClick={handleCustomFocusClick}
                     className={`
                       min-h-11 px-3 py-2 rounded-lg text-sm font-medium border transition-colors duration-150
                       disabled:opacity-50 disabled:cursor-not-allowed
                       ${isCustomFocus
-                        ? 'bg-accent-primary/20 border-accent-primary text-accent-primary font-semibold'
+                        ? 'bg-[var(--ej-blue-soft)] border-accent-primary text-[var(--ej-blue)] font-semibold'
                         : 'bg-bg-quaternary border-border text-text-secondary hover:border-accent-primary/50'}
                     `}
                   >
@@ -237,7 +239,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
-                      className="mt-3 flex items-center gap-2"
+                      className="mt-3 flex flex-wrap items-center gap-2"
                     >
                       <div className="flex items-center bg-bg-quaternary border border-border rounded-xl p-0.5">
                         <button
@@ -258,7 +260,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                           onChange={handleFocusInputChange}
                           onBlur={handleFocusInputBlur}
                           disabled={disabled}
-                          className="w-14 bg-transparent text-center text-sm font-semibold text-text-primary focus:outline-none disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-14 rounded-md bg-transparent text-center text-sm font-semibold text-text-primary disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <button
                           type="button"
@@ -271,7 +273,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                         </button>
                       </div>
                       <span className="text-sm text-text-muted font-medium">minutos</span>
-                      <span className="text-xs text-text-muted/60">(1 a 240 min)</span>
+                      <span className="text-xs text-text-muted">(1 a 240 min)</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -290,13 +292,14 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                         key={p.label}
                         id={`break-preset-${p.label.replace(' ', '-')}`}
                         type="button"
+                        aria-pressed={isActive}
                         disabled={disabled}
                         onClick={() => handleBreakPreset(p.minutes)}
                         className={`
                           min-h-11 px-3 py-2 rounded-lg text-sm font-medium border transition-colors duration-150
                           disabled:opacity-50 disabled:cursor-not-allowed
                           ${isActive
-                            ? 'bg-accent-success/20 border-accent-success text-accent-success font-semibold'
+                            ? 'bg-[var(--ej-success-soft)] border-accent-success text-accent-success font-semibold'
                             : 'bg-bg-quaternary border-border text-text-secondary hover:border-accent-success/50'}
                         `}
                       >
@@ -307,13 +310,14 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                   <button
                     id="break-preset-Personalizado"
                     type="button"
+                    aria-pressed={isCustomBreak}
                     disabled={disabled}
                     onClick={handleCustomBreakClick}
                     className={`
                       min-h-11 px-3 py-2 rounded-lg text-sm font-medium border transition-colors duration-150
                       disabled:opacity-50 disabled:cursor-not-allowed
                       ${isCustomBreak
-                        ? 'bg-accent-success/20 border-accent-success text-accent-success font-semibold'
+                        ? 'bg-[var(--ej-success-soft)] border-accent-success text-accent-success font-semibold'
                         : 'bg-bg-quaternary border-border text-text-secondary hover:border-accent-success/50'}
                     `}
                   >
@@ -327,7 +331,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                       initial={{ opacity: 0, y: -6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -6 }}
-                      className="mt-3 flex items-center gap-2"
+                      className="mt-3 flex flex-wrap items-center gap-2"
                     >
                       <div className="flex items-center bg-bg-quaternary border border-border rounded-xl p-0.5">
                         <button
@@ -348,7 +352,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                           onChange={handleBreakInputChange}
                           onBlur={handleBreakInputBlur}
                           disabled={disabled}
-                          className="w-14 bg-transparent text-center text-sm font-semibold text-text-primary focus:outline-none disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-14 rounded-md bg-transparent text-center text-sm font-semibold text-text-primary disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <button
                           type="button"
@@ -361,7 +365,7 @@ export function TimerModeSelector({ settings, onUpdate, disabled }: TimerModeSel
                         </button>
                       </div>
                       <span className="text-sm text-text-muted font-medium">minutos</span>
-                      <span className="text-xs text-text-muted/60">(1 a 60 min)</span>
+                      <span className="text-xs text-text-muted">(1 a 60 min)</span>
                     </motion.div>
                   )}
                 </AnimatePresence>

@@ -17,6 +17,7 @@ ui-debug.log
 
 # Emuladores e dados locais
 emulator-data/
+.qa/
 *.local
 
 # Variáveis de ambiente e segredos

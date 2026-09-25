@@ -104,7 +104,7 @@ export function SeasonsPage() {
 
       {celebrate && (
         <div className="season-celebration" onClick={event => { if (event.target === event.currentTarget) closeCelebration(); }}>
-          {!reducedMotion && Array.from({ length: 18 }, (_, index) => <motion.span aria-hidden key={index} className="season-celebration__confetti" style={{ left: `${(index * 37) % 100}%`, background: ['#2F63E8', '#8B5CF6', '#F4C415'][index % 3] }} animate={{ y: ['0vh', '95vh'], rotate: [0, 180], opacity: [1, 1, 0] }} transition={{ duration: 2 + index % 3, delay: (index % 5) / 10 }} />)}
+          {!reducedMotion && Array.from({ length: 18 }, (_, index) => <motion.span aria-hidden key={index} className="season-celebration__confetti" style={{ left: `${(index * 37) % 100}%`, background: ['var(--color-accent-primary)', 'var(--ej-purple)', 'var(--color-brand-yellow)'][index % 3] }} animate={{ y: ['0vh', '95vh'], rotate: [0, 180], opacity: [1, 1, 0] }} transition={{ duration: 2 + index % 3, delay: (index % 5) / 10 }} />)}
           <div ref={celebrationRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="celebration-title" aria-describedby="celebration-season" className="season-celebration__dialog">
             <button type="button" aria-label="Fechar celebração" className="season-celebration__close" onClick={closeCelebration}><Icon name="close" size={20} /></button>
             <div className="season-celebration__trophy"><Icon name="ranking" size={36} /></div>

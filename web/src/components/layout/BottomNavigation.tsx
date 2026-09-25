@@ -4,6 +4,7 @@ import { Icon } from '../ui/DesignSystem';
 import { useDialogA11y } from '../ui/Dialog';
 import { useGroupAdmin } from '../../hooks/useGroupAdmin';
 import { navigationItems } from './navigation';
+import { ThemeSelect } from '../ui/ThemeSelect';
 
 const primaryItems = [
   {path:'/',label:'Estudar',icon:'study' as const},
@@ -28,6 +29,7 @@ export function BottomNavigation() {
       <div className="ej-sheet-title"><h2 id="mobile-menu-title" className="font-bold text-lg">Sua jornada</h2><button className="ej-icon-button" aria-label="Fechar menu" onClick={() => setOpen(false)}><Icon name="close"/></button></div>
       {navigationItems.filter(item => !primaryItems.some(primary => primary.path === item.path) && (!item.admin || isAdmin)).map(item => <NavLink key={item.path} to={item.path} onClick={() => setOpen(false)} className="ej-nav-link"><Icon name={item.icon}/>{item.label}</NavLink>)}
       <NavLink to="/profile" onClick={() => setOpen(false)} className="ej-nav-link"><Icon name="profile"/>Meu perfil e configurações</NavLink>
+      <ThemeSelect/>
     </div></div>}
   </>;
 }

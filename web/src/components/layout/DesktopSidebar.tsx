@@ -4,6 +4,7 @@ import { BrandLogo, Icon } from '../ui/DesignSystem';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useGroupAdmin } from '../../hooks/useGroupAdmin';
 import { navigationItems } from './navigation';
+import { ThemeSelect } from '../ui/ThemeSelect';
 
 export function DesktopSidebar() {
   const { user, profile } = useAuthContext();
@@ -18,6 +19,7 @@ export function DesktopSidebar() {
       </div>)}
     </nav>
     <div className="ej-sidebar-note"><p>Disciplina hoje,<br/><em>conquistas amanhã.</em></p></div>
+    <ThemeSelect/>
     <Link to="/profile" className="ej-sidebar-user"><Avatar name={displayName} src={profile?.avatarUrl} size="md"/><div className="min-w-0 flex-1"><strong>{displayName}</strong><small>{profile?.nickname ? `@${profile.nickname}` : 'Meu perfil'}</small></div><Icon name="arrow" size={16}/></Link>
   </aside>;
 }

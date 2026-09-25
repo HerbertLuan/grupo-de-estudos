@@ -84,8 +84,8 @@ export const EditProfilePage: React.FC = () => {
           <Card className="edit-profile-fields">
             <h2>Informações pessoais</h2><p>Seu nome e apelido aparecem no feed, no ranking e no seu perfil.</p>
             <div className="space-y-6">
-              <div><label htmlFor="profile-name">Nome de exibição</label><input id="profile-name" type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-bg-primary border border-border rounded-xl px-4 py-3 text-text-primary" placeholder="Seu nome completo" required minLength={2} autoComplete="name" /></div>
-              <div><label htmlFor="profile-nickname">Apelido</label><input id="profile-nickname" type="text" value={`@${profile?.nickname || ''}`} disabled aria-describedby="nickname-help" className="w-full bg-bg-primary border border-border rounded-xl px-4 py-3 text-text-secondary cursor-not-allowed" /><p id="nickname-help" className="text-xs text-text-secondary mt-2">O apelido não pode ser alterado.</p></div>
+              <div><label htmlFor="profile-name">Nome de exibição</label><input id="profile-name" type="text" value={name} onChange={e => setName(e.target.value)} className="ej-input" placeholder="Seu nome completo" required minLength={2} autoComplete="name" /></div>
+              <div><label htmlFor="profile-nickname">Apelido</label><input id="profile-nickname" type="text" value={`@${profile?.nickname || ''}`} disabled aria-describedby="nickname-help" className="ej-input" /><p id="nickname-help" className="text-xs text-text-secondary mt-2">O apelido não pode ser alterado.</p></div>
             </div>
           </Card>
         </div>

@@ -121,8 +121,8 @@ export function SubjectsPage() {
     <PageHeader eyebrow="ORGANIZAÇÃO QUE VIRA EVOLUÇÃO" title={view === 'colors' ? 'Dê cor ao seu foco.' : view === 'palette' ? 'Sua matéria, sua cor.' : 'Minhas matérias'}
       description={view === 'catalog' ? 'Selecione as matérias que fazem parte da sua jornada de estudos.' : view === 'colors' ? 'Uma identidade para cada matéria. Reconheça seu progresso num olhar.' : view === 'palette' ? paletteSubject?.name : 'Seu conhecimento, organizado. Tudo pronto para o próximo estudo.'}
       actions={studyLink ? <Link to="/" className="ej-button ej-button-secondary"><Icon name="study" size={17} />Ir estudar</Link> : <Button variant="secondary" onClick={back}>← Voltar</Button>} />
-    {error && <p role="alert" className="rounded-xl border border-accent-danger/35 bg-accent-danger/5 p-4 text-sm text-accent-danger">{error}</p>}
-    {notice && <p role="status" className="flex items-center gap-2 rounded-xl border border-accent-success/30 bg-accent-success/5 p-4 text-sm text-accent-success"><Icon name="check" size={18} />{notice}</p>}
+    {error && <p role="alert" className="rounded-xl border border-[var(--ej-danger-border)] bg-[var(--ej-danger-soft)] p-4 text-sm text-accent-danger">{error}</p>}
+    {notice && <p role="status" className="flex items-center gap-2 rounded-xl border border-[var(--ej-success-border)] bg-[var(--ej-success-soft)] p-4 text-sm text-accent-success"><Icon name="check" size={18} />{notice}</p>}
     {!setup && !error && <Card className="p-6" role="status"><p className="text-sm text-text-secondary">Preparando seu catálogo de matérias...</p><div className="mt-5 grid gap-3">{[1, 2, 3].map(i => <div key={i} className="ej-skeleton h-16" />)}</div></Card>}
     {setup && <div className="subjects-workspace-grid">
       <div className="min-w-0 space-y-5">
@@ -131,7 +131,7 @@ export function SubjectsPage() {
             <div className="mb-5 flex items-center justify-between gap-3"><div><p className="ej-eyebrow">01 / SELECIONE</p><h2 className="mt-2 text-lg font-semibold">Seu catálogo de estudos</h2></div><Badge tone="blue">{draftIds.length} selecionada(s)</Badge></div>
             <label className="mb-5 block"><span className="sr-only">Buscar matéria</span><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Encontre uma matéria..." className="ej-input w-full" /></label>
             <section aria-label={query.trim() ? 'Resultados da busca' : 'Catálogo do grupo'} className="space-y-3">
-              <div className="flex items-center justify-between gap-3"><h3 className="text-xs font-medium text-text-muted">{query.trim() ? `Resultados (${results.length})` : `${setup.subjects.length} matérias do grupo`}</h3>{!query.trim() && setup.subjects.length > 3 && <button type="button" onClick={() => setShowAll(value => !value)} className="min-h-11 text-xs font-medium text-accent-primary-hover">{showAll ? 'Mostrar menos' : 'Ver todas'}</button>}</div>
+              <div className="flex items-center justify-between gap-3"><h3 className="text-xs font-medium text-text-muted">{query.trim() ? `Resultados (${results.length})` : `${setup.subjects.length} matérias do grupo`}</h3>{!query.trim() && setup.subjects.length > 3 && <button type="button" onClick={() => setShowAll(value => !value)} className="min-h-11 text-xs font-medium text-[var(--ej-text-link)] hover:text-[var(--ej-text-link-hover)]">{showAll ? 'Mostrar menos' : 'Ver todas'}</button>}</div>
               {!setup.subjects.length && <div className="subject-empty"><Icon name="subjects" size={30} /><h3>O catálogo começa aqui.</h3><p>Ainda não há matérias aprovadas. {setup.isAdmin ? 'Cadastre a primeira na administração do grupo.' : 'Sugira uma matéria para começar.'}</p></div>}
               {!!setup.subjects.length && !results.length && <div className="subject-empty"><h3>Nenhuma matéria encontrada.</h3><p>Tente outro termo ou sugira uma nova matéria.</p></div>}
               {visible.map(subject => {
@@ -139,7 +139,7 @@ export function SubjectsPage() {
                 return <button key={subject.id} type="button" aria-pressed={checked} onClick={() => toggle(subject.id)} className={`subject-select-row ${checked ? 'is-selected' : ''}`}>
                   <span aria-hidden="true" className="subject-check">{checked && <Icon name="check" size={14} />}</span>
                   <span className="min-w-0 flex-1 text-sm font-medium">{subject.name}</span>
-                  {checked && <span className="text-xs text-accent-primary-hover">Na sua lista</span>}
+                  {checked && <span className="text-xs text-[var(--ej-blue)]">Na sua lista</span>}
                 </button>;
               })}
             </section>
@@ -164,7 +164,7 @@ export function SubjectsPage() {
           <fieldset><legend className="mb-3 text-sm font-medium">Escolha uma cor</legend><div className="grid grid-cols-4 gap-4 py-3 sm:grid-cols-6">
             {colorOptions.map(color => <label key={color} className="relative flex cursor-pointer justify-center">
               <input type="radio" name="subject-color" value={color} checked={paletteColor === color} onChange={() => setPaletteColor(color)} className="peer sr-only" />
-              <span className="flex size-12 items-center justify-center rounded-xl border-2 border-transparent text-lg text-[#0b1b3b] peer-checked:border-white peer-checked:ring-2 peer-checked:ring-accent-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-accent-primary" style={{ backgroundColor: color }}>{paletteColor === color && <Icon name="check" />}</span>
+              <span className="flex size-12 items-center justify-center rounded-xl border-2 border-transparent text-lg text-brand-navy peer-checked:border-bg-secondary peer-checked:ring-2 peer-checked:ring-accent-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-[var(--ej-focus)]" style={{ backgroundColor: color }}>{paletteColor === color && <Icon name="check" />}</span>
               <span className="sr-only">{color}</span>
             </label>)}
           </div></fieldset>

@@ -1,0 +1,18 @@
+/* Data colors stay attached to the series; labels always use readable theme text. */
+.progress-chart-tooltip { max-width: min(280px, calc(100vw - 48px)); padding: 12px; border: 1px solid var(--ej-border-strong); border-radius: 10px; background: var(--color-bg-secondary); color: var(--color-text-primary); box-shadow: 0 8px 24px color-mix(in srgb, var(--ej-overlay) 25%, transparent); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.progress-chart-tooltip__row { display: flex; align-items: baseline; gap: 7px; }
+.progress-chart-swatch { display: inline-block; flex: 0 0 10px; width: 10px; height: 10px; border: 1px solid color-mix(in srgb, var(--color-text-primary) 20%, transparent); border-radius: 2px; }
+.progress-chart-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; color: var(--color-text-secondary); font-size: 12px; }
+.progress-chart-legend > span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.progress-control { display: block; min-width: 0; max-width: 100%; min-height: 44px; margin-top: 4px; padding: 10px 12px; border: 1px solid var(--ej-border-input); border-radius: 10px; background: var(--color-bg-secondary); color: var(--color-text-primary); }
+.progress-control:hover { border-color: var(--color-accent-primary); }
+.progress-period-button { min-height: 44px; padding: 10px 12px; border: 1px solid var(--ej-border-input); border-radius: 9px; background: var(--color-bg-secondary); color: var(--color-text-primary); font-size: 13px; transition: background 160ms, border-color 160ms; }
+.progress-period-button:hover { background: var(--color-bg-tertiary); border-color: var(--color-accent-primary); }
+.progress-period-button[aria-pressed=true] { background: var(--color-accent-primary); border-color: var(--color-accent-primary); color: var(--ej-on-action); }
+.progress-period-button[aria-pressed=true]:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+.progress-period-button:active { background: var(--color-bg-quaternary); }
+.progress-period-button[aria-pressed=true]:active { background: var(--ej-action-active); border-color: var(--ej-action-active); }
+.progress-period-button:disabled, .progress-control:disabled { cursor: not-allowed; opacity: .5; }
+.progress-text-action { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 8px; border-radius: 8px; color: var(--ej-text-link); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.progress-text-action:hover { color: var(--ej-text-link-hover); background: var(--color-bg-tertiary); }
+.progress-text-action:active { background: var(--color-bg-quaternary); }

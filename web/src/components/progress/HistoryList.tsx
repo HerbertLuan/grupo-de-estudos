@@ -4,6 +4,7 @@ import type { SubjectSession, SubjectSetup } from '../../services/subjectService
 import { formatDate } from '../../utils/formatDate';
 import { formatDuration } from '../../utils/formatTime';
 import { subjectColor } from '../../utils/subjectColor';
+import './progress.css';
 
 interface HistoryListProps {
   history: DailyStudy[];
@@ -48,7 +49,7 @@ export function HistoryList({ history, sessions, setup, onEdit }: HistoryListPro
               <p className="flex items-center gap-2 text-sm font-medium"><span aria-hidden="true" className="size-3 shrink-0 rounded-full" style={{ backgroundColor: subjectColor(session.subjectId, setup?.subjectColors || {}) }} /><span className="truncate">{subjectNames.get(session.subjectId || '') || 'Outros'}</span></p>
               <p className="mt-1 text-xs text-text-secondary">{formatDuration(session.totalSeconds)} · {session.didQuestions === true ? `${session.correctCount ?? 0}/${session.questionCount ?? 0} questões` : session.didQuestions === false ? 'Sem questões' : 'Questões não informadas'}</p>
             </div>
-            {onEdit && <button type="button" onClick={() => onEdit(session)} className="shrink-0 text-sm text-accent-primary underline">Editar</button>}
+            {onEdit && <button type="button" onClick={() => onEdit(session)} className="progress-text-action">Editar</button>}
           </div>) : <p className="px-1 py-2 text-sm text-text-secondary">Detalhes das sessões indisponíveis para este dia.</p>}
         </div>}
       </div>;

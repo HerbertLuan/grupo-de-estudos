@@ -39,8 +39,8 @@ export function HistorySection({ uid, sessions, setup, onEdit }: Props) {
   function editSession(session: SubjectSession) { setOpen(false); onEdit?.(session); }
 
   return <section className="space-y-3">
-    <div className="flex justify-between items-center gap-3"><h2 className="text-lg font-bold text-text-primary">Histórico de estudos</h2>{preview.length > 4 && <button type="button" onClick={showAll} className="text-sm text-accent-primary underline">Ver mais</button>}</div>
+    <div className="flex justify-between items-center gap-3"><h2 className="text-lg font-bold text-text-primary">Histórico de estudos</h2>{preview.length > 4 && <button type="button" onClick={showAll} className="progress-text-action">Ver mais</button>}</div>
     {loading ? <p className="text-text-secondary">Carregando histórico...</p> : error && !open ? <p role="alert" className="text-accent-danger">{error}</p> : <HistoryList history={preview.slice(0, 4)} sessions={sessions} setup={setup} onEdit={editSession} />}
-    {open && <ListModal title="Histórico de estudos" onClose={() => setOpen(false)}>{modalLoading ? <p className="text-text-secondary">Carregando histórico completo...</p> : error ? <div><p role="alert" className="text-accent-danger mb-3">{error}</p><button type="button" onClick={() => void loadAll()} className="text-accent-primary underline">Tentar novamente</button></div> : <HistoryList history={allHistory || []} sessions={sessions} setup={setup} onEdit={editSession} />}</ListModal>}
+    {open && <ListModal title="Histórico de estudos" onClose={() => setOpen(false)}>{modalLoading ? <p className="text-text-secondary">Carregando histórico completo...</p> : error ? <div><p role="alert" className="text-accent-danger mb-3">{error}</p><button type="button" onClick={() => void loadAll()} className="progress-text-action">Tentar novamente</button></div> : <HistoryList history={allHistory || []} sessions={sessions} setup={setup} onEdit={editSession} />}</ListModal>}
   </section>;
 }

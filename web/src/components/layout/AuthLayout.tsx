@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { BrandLogo } from '../ui/DesignSystem';
+import { ThemeSelect } from '../ui/ThemeSelect';
 import './auth.css';
 
 export function AuthLayout({ title, children }: { title: string; children: ReactNode }) {
@@ -12,6 +13,7 @@ export function AuthLayout({ title, children }: { title: string; children: React
       <div className="ej-brand-angle" aria-hidden="true"/>
     </section>
     <section className="ej-auth-form-side" aria-label={title}>
+      <div className="ej-auth-theme"><ThemeSelect/></div>
       <div className="ej-auth-mobile-logo"><BrandLogo/><span>Disciplina hoje.<br/>Conquistas amanhã.</span></div>
       <div className="ej-auth-form">{children}</div>
       <p className="ej-auth-footer">Estuda Junto · Cada dia de estudo conta.</p>

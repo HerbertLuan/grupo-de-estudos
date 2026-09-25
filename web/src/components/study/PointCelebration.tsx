@@ -10,7 +10,7 @@ export function PointCelebration({ show, onClose, streak, totalPoints, newBadges
   if (!show) return null;
   return <div className="ej-dialog-backdrop">
     <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="point-celebration-title" tabIndex={-1} className="ej-dialog study-modal-surface max-w-sm text-center">
-      <div className="study-modal-symbol" style={{ color: '#f4c415', borderColor: '#f4c41555', background: '#f4c41512' }}><Icon name="ranking" size={31} /></div>
+      <div className="study-modal-symbol study-modal-symbol--achievement"><Icon name="ranking" size={31} /></div>
       <Badge tone="yellow">+1 ponto na sua jornada</Badge>
       <h2 id="point-celebration-title" className="mt-4 text-2xl font-bold">Disciplina que conquista.</h2>
       <p className="mt-3 mb-6 text-sm leading-relaxed text-text-secondary">Você completou 60 minutos de estudo hoje. Mais um passo em direção ao que importa.</p>

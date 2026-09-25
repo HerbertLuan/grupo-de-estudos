@@ -23,7 +23,7 @@ export function Icon({ name, size = 20, className = '' }: { name: IconName; size
 
 /** The supplied artwork is displayed intact, with its surrounding whitespace clipped by CSS. */
 export function BrandLogo({ className = '' }: { className?: string }) {
-  return <span className={`brand-logo ${className}`}><img src="/brand/estuda-junto.png" alt="Estuda Junto" width="1536" height="864" fetchPriority="high" /></span>;
+  return <span className={`brand-logo ${className}`}><img src="/brand/estuda-junto.png?v=05cce5a6" alt="Estuda Junto" width="1672" height="941" fetchPriority="high" /></span>;
 }
 
 export function PageHeader({ eyebrow, title, description, actions, children, className = '' }: { eyebrow?: string; title: string; description?: ReactNode; actions?: ReactNode; children?: ReactNode; className?: string }) {

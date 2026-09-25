@@ -68,8 +68,8 @@ export function SeasonManagement() {
 
   return <section className="space-y-5 border-t border-border pt-7" aria-labelledby="season-management-title">
     <div className="flex items-center gap-4"><span className="study-shortcut-icon"><Icon name="seasons" /></span><div><h2 id="season-management-title" className="text-xl font-semibold">O próximo capítulo</h2><p className="mt-1 text-sm text-text-secondary">Crie, inicie e encerre as temporadas do grupo.</p></div></div>
-    {error && <p role="alert" className="rounded-xl border border-accent-danger/30 bg-accent-danger/5 p-4 text-sm text-accent-danger">{error}</p>}
-    {notice && <p role="status" className="rounded-xl border border-accent-success/30 bg-accent-success/5 p-4 text-sm text-accent-success">{notice}</p>}
+    {error && <p role="alert" className="rounded-xl border border-[var(--ej-danger-border)] bg-[var(--ej-danger-soft)] p-4 text-sm text-accent-danger">{error}</p>}
+    {notice && <p role="status" className="rounded-xl border border-[var(--ej-success-border)] bg-[var(--ej-success-soft)] p-4 text-sm text-accent-success">{notice}</p>}
     <div className="admin-content-grid">
       <form className="ej-card space-y-5 self-start p-5 sm:p-6" onSubmit={createSeason}>
         <div><p className="ej-eyebrow">NOVO CICLO</p><h3 className="mt-2 text-lg font-semibold">Criar temporada</h3></div>
@@ -88,7 +88,7 @@ export function SeasonManagement() {
           <Badge tone={season.active ? 'yellow' : 'blue'}>{season.active ? 'Em andamento' : 'Preparada'}</Badge>
           <h4 className="mt-3 break-words text-lg font-semibold">{season.name}</h4>
           <p className="mt-2 text-xs text-text-muted">{season.startDate.split('-').reverse().join('/')} — {season.endDate.split('-').reverse().join('/')}</p>
-          <div className="mt-5">{season.active ? confirmClose === season.id ? <div className="space-y-3 rounded-lg border border-accent-warning/30 bg-accent-warning/5 p-4">
+          <div className="mt-5">{season.active ? confirmClose === season.id ? <div className="space-y-3 rounded-lg border border-[var(--ej-warning-border)] bg-[var(--ej-warning-soft)] p-4">
             <p className="text-sm leading-relaxed">Encerrar agora e oficializar o pódio? Esta ação é definitiva.</p>
             <div className="flex flex-wrap gap-3">
               <Button type="button" variant="danger" disabled={busy} onClick={() => void run('close_season', { seasonId: season.id })}>Confirmar encerramento</Button>

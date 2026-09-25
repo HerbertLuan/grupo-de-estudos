@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Badge } from '../ui/DesignSystem';
+import { Badge, Button } from '../ui/DesignSystem';
 import { useDialogA11y } from '../ui/Dialog';
 
 interface Props {
@@ -34,15 +34,15 @@ export function LongStudySessionModal({ reviewRequired, checkInDue, capSeconds, 
       {reviewRequired ? <>
         <label className="block text-sm font-medium">Tempo real estudado (minutos)
           <input type="number" min="0" max={maxMinutes} step="1" value={minutes} onChange={event => setMinutes(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-border bg-bg-primary p-3 focus-visible:outline-2 focus-visible:outline-accent-primary" />
+            className="ej-input mt-2 w-full" />
         </label>
         <p className="text-xs text-text-secondary">Máximo para esta sessão: {maxMinutes} minutos. O intervalo depois desse limite não será contabilizado.</p>
-        <button type="button" disabled={busy || !valid} onClick={() => onResolve('finish', parsedMinutes * 60)} className="w-full rounded-xl bg-accent-primary p-3 font-semibold text-white disabled:opacity-50">Finalizar com esse tempo</button>
-        <button type="button" disabled={busy || !valid} onClick={() => onResolve('continue', parsedMinutes * 60)} className="w-full rounded-xl border border-accent-primary p-3 font-medium text-accent-primary disabled:opacity-50">Continuar a partir de agora</button>
-        <button type="button" disabled={busy} onClick={() => { if (window.confirm('Descartar esta sessão sem salvar tempo?')) onResolve('discard'); }} className="w-full py-2 text-sm text-accent-danger underline disabled:opacity-50">Descartar sessão</button>
+        <Button type="button" disabled={busy || !valid} onClick={() => onResolve('finish', parsedMinutes * 60)} className="w-full">Finalizar com esse tempo</Button>
+        <Button type="button" variant="secondary" disabled={busy || !valid} onClick={() => onResolve('continue', parsedMinutes * 60)} className="w-full">Continuar a partir de agora</Button>
+        <Button type="button" variant="danger" disabled={busy} onClick={() => { if (window.confirm('Descartar esta sessão sem salvar tempo?')) onResolve('discard'); }} className="w-full">Descartar sessão</Button>
       </> : <>
-        <button type="button" disabled={busy} onClick={onConfirm} className="w-full rounded-xl bg-accent-primary p-3 font-semibold text-white disabled:opacity-50">Sim, continuar estudando</button>
-        <button type="button" disabled={busy} onClick={onFinish} className="w-full rounded-xl border border-accent-primary p-3 font-medium text-accent-primary disabled:opacity-50">Finalizar sessão</button>
+        <Button type="button" disabled={busy} onClick={onConfirm} className="w-full">Sim, continuar estudando</Button>
+        <Button type="button" variant="secondary" disabled={busy} onClick={onFinish} className="w-full">Finalizar sessão</Button>
       </>}
       {error && <p role="alert" className="text-sm text-accent-danger">{error}</p>}
     </div>

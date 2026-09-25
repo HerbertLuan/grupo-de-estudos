@@ -1,6 +1,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 import type { TimeSeriesPoint } from '../../types';
+import './progress.css';
 
 interface StudyChartProps {
   data: TimeSeriesPoint[];
@@ -19,7 +20,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const entry = payload[0].payload as TimeSeriesPoint;
     return (
-      <div className="bg-bg-tertiary border border-border p-3 rounded-lg shadow-xl">
+      <div className="progress-chart-tooltip">
         <p className="font-semibold text-text-primary mb-1">{formatDate(entry.date)}</p>
         <p className="text-accent-primary text-sm">{`${payload[0].value.toFixed(1)} horas`}</p>
         {entry.pointEarned && (
@@ -38,7 +39,7 @@ export const StudyChart: React.FC<StudyChartProps> = ({ data, title }) => {
       <div className="flex-1 w-full min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--ej-chart-grid)" />
             <XAxis
               dataKey={DATE_KEY}
               axisLine={false}
@@ -54,12 +55,12 @@ export const StudyChart: React.FC<StudyChartProps> = ({ data, title }) => {
               tickFormatter={(v) => `${v}h`}
               width={38}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--color-bg-tertiary)' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--ej-neutral-soft)' }} />
             <Bar dataKey={HOURS_KEY} radius={[4, 4, 0, 0]} maxBarSize={40}>
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry.pointEarned ? '#F4C415' : '#2F63E8'}
+                  fill={entry.pointEarned ? 'var(--ej-chart-award)' : 'var(--ej-chart-blue)'}
                 />
               ))}
             </Bar>

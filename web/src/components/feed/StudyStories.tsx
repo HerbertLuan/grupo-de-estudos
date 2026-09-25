@@ -99,7 +99,7 @@ function StoryViewer({ story, member, uid, timezone, close }: { story: Story; me
       {photo ? <img src={photo} alt={`Momento de estudo de ${member.name}`} /> : <p role="status">{photoError ? 'Não foi possível carregar a foto.' : 'Carregando foto…'}</p>}
     </div>
     <footer><div className="story-reactions" aria-label="Reações">{STORY_EMOJIS.map(emoji => <button key={emoji} aria-label={`Reagir com ${emoji}`} aria-pressed={selected === emoji} disabled={pending || uid === story.userId} onClick={() => react(emoji)}>{emoji}<small>{Object.values(displayed).filter(v => v === emoji).length}</small></button>)}</div>
-      {uid === story.userId && <button disabled={removing} onClick={async () => { setRemoving(true); try { await removeStory(story.id); close(); } catch { showToast('Erro ao remover foto. Tente novamente.', 'error'); setRemoving(false); } }}>{removing ? 'Removendo…' : 'Remover minha foto'}</button>}
+      {uid === story.userId && <button className="story-remove" disabled={removing} onClick={async () => { setRemoving(true); try { await removeStory(story.id); close(); } catch { showToast('Erro ao remover foto. Tente novamente.', 'error'); setRemoving(false); } }}>{removing ? 'Removendo…' : 'Remover minha foto'}</button>}
     </footer>
     {profileOpen && <MemberDetails member={member} timezone={timezone} close={() => setProfileOpen(false)} />}
   </Dialog>;

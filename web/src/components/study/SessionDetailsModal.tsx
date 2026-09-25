@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { getSubjectSetup, saveSessionDetails, type SubjectSession, type SubjectSetup } from '../../services/subjectService';
 import { subjectColor } from '../../utils/subjectColor';
-import { Badge, Icon } from '../ui/DesignSystem';
+import { Badge, Button, Icon } from '../ui/DesignSystem';
 import { useDialogA11y } from '../ui/Dialog';
 
 interface Props { sessionId: string | null; onClose: () => void; initial?: SubjectSession | null }
@@ -67,9 +67,9 @@ export function SessionDetailsModal({ sessionId, onClose, initial }: Props) {
     finally { setBusy(false); }
   }
 
-  const optionCard = 'flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors focus-within:outline-2 focus-within:outline-accent-primary';
-  const selectedCard = 'border-accent-primary bg-accent-primary/10';
-  const unselectedCard = 'border-border bg-bg-secondary hover:border-accent-primary/60';
+  const optionCard = 'flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--ej-focus)]';
+  const selectedCard = 'border-accent-primary bg-[var(--ej-blue-soft)]';
+  const unselectedCard = 'border-[var(--ej-border-input)] bg-bg-secondary hover:border-accent-primary';
   return <div className="ej-dialog-backdrop z-[60]" onClick={e => { if (e.target === e.currentTarget && !busy) close(); }}>
     <form ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="session-details-title" tabIndex={-1} onSubmit={save} className="ej-dialog study-modal-surface max-w-lg space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -80,9 +80,9 @@ export function SessionDetailsModal({ sessionId, onClose, initial }: Props) {
       <fieldset className="space-y-3"><legend className="mb-3 font-semibold">Matéria estudada</legend>
         <label className={`${optionCard} ${subjectId === null ? selectedCard : unselectedCard}`}>
           <input type="radio" name="subject" checked={subjectId === null} onChange={() => setSubjectId(null)} className="sr-only" />
-          <span aria-hidden="true" className="size-5 shrink-0 rounded-full border border-white/20 bg-text-muted" />
+          <span aria-hidden="true" className="size-5 shrink-0 rounded-full border border-[var(--ej-border-strong)] bg-text-muted" />
           <span className="min-w-0 flex-1">Outros</span>
-          {subjectId === null && <span aria-hidden="true" className="text-accent-primary">✓</span>}
+          {subjectId === null && <span aria-hidden="true" className="text-[var(--ej-blue)]">✓</span>}
         </label>
         {mySubjects.map(subject => {
           const color = subjectColor(subject.id, setup?.subjectColors || {});
@@ -90,13 +90,13 @@ export function SessionDetailsModal({ sessionId, onClose, initial }: Props) {
           const previousSubject = initial?.subjectId === subject.id && !setup?.preferredSubjectIds.includes(subject.id);
           return <label key={subject.id} className={`${optionCard} ${selected ? selectedCard : unselectedCard}`}>
             <input type="radio" name="subject" checked={selected} onChange={() => setSubjectId(subject.id)} className="sr-only" />
-            <span aria-hidden="true" className="size-5 shrink-0 rounded-full border border-white/20" style={{ backgroundColor: color }} />
+            <span aria-hidden="true" className="size-5 shrink-0 rounded-full border border-[var(--ej-border-strong)]" style={{ backgroundColor: color }} />
             <span className="min-w-0 flex-1"><span className="block truncate">{subject.name}</span>{previousSubject && <span className="block text-xs text-text-secondary">Registrada nesta sessão</span>}</span>
-            {selected && <span aria-hidden="true" className="text-accent-primary">✓</span>}
+            {selected && <span aria-hidden="true" className="text-[var(--ej-blue)]">✓</span>}
           </label>;
         })}
         {!setup && !error ? <p role="status" className="text-sm text-text-muted">Carregando suas matérias...</p> : !mySubjects.length && <p className="text-sm text-text-secondary">Sua lista está vazia. Escolha matérias do grupo para vê-las aqui.</p>}
-        {!initial && <Link to="/subjects" className="inline-block text-sm font-medium text-accent-primary underline underline-offset-2">Gerenciar minhas matérias</Link>}
+        {!initial && <Link to="/subjects" className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--ej-text-link)] underline underline-offset-2 hover:text-[var(--ej-text-link-hover)]">Gerenciar minhas matérias</Link>}
       </fieldset>
 
       <fieldset className="space-y-3"><legend className="mb-3 font-semibold">Fez questões neste estudo?</legend>
@@ -104,15 +104,15 @@ export function SessionDetailsModal({ sessionId, onClose, initial }: Props) {
           {[{ value: true, label: 'Sim' }, { value: false, label: 'Não' }].map(option => <label key={option.label} className={`${optionCard} justify-center ${didQuestions === option.value ? selectedCard : unselectedCard}`}>
             <input type="radio" name="questions" checked={didQuestions === option.value} onChange={() => setDidQuestions(option.value)} className="sr-only" />
             <span>{option.label}</span>
-            {didQuestions === option.value && <span aria-hidden="true" className="text-accent-primary">✓</span>}
+            {didQuestions === option.value && <span aria-hidden="true" className="text-[var(--ej-blue)]">✓</span>}
           </label>)}
         </div>
       </fieldset>
-      {didQuestions && <div className="grid grid-cols-2 gap-3"><label className="text-sm font-medium">Questões feitas<input aria-label="Questões feitas" required type="number" min="1" step="1" value={questionCount} onChange={e => setQuestionCount(e.target.value)} className="mt-2 w-full rounded-xl border border-border bg-bg-secondary p-3 focus-visible:outline-2 focus-visible:outline-accent-primary" /></label><label className="text-sm font-medium">Acertos<input aria-label="Acertos" required type="number" min="0" max={questionCount || undefined} step="1" value={correctCount} onChange={e => setCorrectCount(e.target.value)} className="mt-2 w-full rounded-xl border border-border bg-bg-secondary p-3 focus-visible:outline-2 focus-visible:outline-accent-primary" /></label></div>}
-      {error && <p role="alert" className="rounded-xl border border-accent-danger/50 p-3 text-sm text-accent-danger">{error}</p>}
+      {didQuestions && <div className="grid grid-cols-2 gap-3"><label className="min-w-0 text-sm font-medium">Questões feitas<input aria-label="Questões feitas" required type="number" min="1" step="1" value={questionCount} onChange={e => setQuestionCount(e.target.value)} className="ej-input mt-2 w-full" /></label><label className="min-w-0 text-sm font-medium">Acertos<input aria-label="Acertos" required type="number" min="0" max={questionCount || undefined} step="1" value={correctCount} onChange={e => setCorrectCount(e.target.value)} className="ej-input mt-2 w-full" /></label></div>}
+      {error && <p role="alert" className="rounded-xl border border-[var(--ej-danger-border)] bg-[var(--ej-danger-soft)] p-3 text-sm text-accent-danger">{error}</p>}
       <div className="space-y-3">
-        <button type="submit" disabled={busy || didQuestions === null} className="w-full rounded-xl bg-accent-primary p-3 font-semibold text-white disabled:opacity-50">{busy ? 'Salvando...' : 'Salvar detalhes →'}</button>
-        <button type="button" disabled={busy} onClick={close} className="w-full rounded-xl py-2 text-sm text-text-secondary underline underline-offset-2 hover:text-text-primary">{initial ? 'Cancelar' : 'Deixar em Outros por enquanto'}</button>
+        <Button type="submit" disabled={busy || didQuestions === null} className="w-full">{busy ? 'Salvando...' : 'Salvar detalhes →'}</Button>
+        <Button type="button" variant="ghost" disabled={busy} onClick={close} className="w-full underline underline-offset-2">{initial ? 'Cancelar' : 'Deixar em Outros por enquanto'}</Button>
       </div>
     </form>
   </div>;

@@ -43,8 +43,8 @@ export function AdminPage() {
   return <div className="ej-page admin-workspace">
     <PageHeader eyebrow="CUIDANDO DA COMUNIDADE" title="Administração" description="Organize o conhecimento. Prepare a próxima conquista do grupo."
       actions={<Badge tone="purple"><Icon name="admin" size={14} />Administrador</Badge>} />
-    {error && <p role="alert" className="rounded-xl border border-accent-danger/30 bg-accent-danger/5 p-4 text-sm text-accent-danger">{error}</p>}
-    {notice && <p role="status" className="flex items-center gap-2 rounded-xl border border-accent-success/30 bg-accent-success/5 p-4 text-sm text-accent-success"><Icon name="check" size={18} />{notice}</p>}
+    {error && <p role="alert" className="rounded-xl border border-[var(--ej-danger-border)] bg-[var(--ej-danger-soft)] p-4 text-sm text-accent-danger">{error}</p>}
+    {notice && <p role="status" className="flex items-center gap-2 rounded-xl border border-[var(--ej-success-border)] bg-[var(--ej-success-soft)] p-4 text-sm text-accent-success"><Icon name="check" size={18} />{notice}</p>}
     {!setup ? <Card className="p-6" role="status"><p className="text-sm text-text-secondary">Carregando o catálogo do grupo...</p><div className="ej-skeleton mt-5 h-36" /></Card> : <>
       <section aria-label="Visão geral do catálogo" className="admin-summary-grid">
         <Card className="admin-summary"><span className="study-shortcut-icon"><Icon name="subjects" /></span><div><strong>{setup.subjects.length}</strong><span>Matérias disponíveis</span></div></Card>

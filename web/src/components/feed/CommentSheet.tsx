@@ -18,7 +18,7 @@ export const CommentSheet: React.FC<CommentSheetProps> = ({ isOpen, onClose, com
     try { await onAddComment(content); setContent(''); } finally { setIsSubmitting(false); }
   };
   return (
-    <CommunityDialog open={isOpen} title="Comentários" onClose={onClose} footer={<form onSubmit={handleSubmit} className="comment-compose"><label className="sr-only" htmlFor="feed-comment">Seu comentário</label><input id="feed-comment" type="text" value={content} onChange={e => setContent(e.target.value)} placeholder="Incentive essa conquista..." /><Button type="submit" disabled={!content.trim() || isSubmitting} aria-label="Enviar comentário" busy={isSubmitting}><Icon name="arrow" size={20} /></Button></form>}>
+    <CommunityDialog open={isOpen} title="Comentários" onClose={onClose} footer={<form onSubmit={handleSubmit} className="comment-compose"><label className="sr-only" htmlFor="feed-comment">Seu comentário</label><input id="feed-comment" className="ej-input" type="text" value={content} onChange={e => setContent(e.target.value)} placeholder="Incentive essa conquista..." /><Button type="submit" disabled={!content.trim() || isSubmitting} aria-label="Enviar comentário" busy={isSubmitting}><Icon name="arrow" size={20} /></Button></form>}>
       <div className="p-5 sm:p-6 space-y-5">
         {isLoading ? <LoadingState message="Carregando comentários..." /> : comments.length === 0 ? <div className="py-12 text-center"><p className="font-semibold">Comece uma conversa</p><p className="mt-2 text-sm text-text-secondary">Seu incentivo pode fazer a diferença.</p></div> : comments.map(c => {
           const avatarUrl = c.userAvatarUrl || c.authorAvatarUrl;

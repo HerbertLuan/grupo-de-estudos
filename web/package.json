@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "build:homolog": "tsc -b && vite build --mode homologacao",
     "lint": "oxlint",
+    "test": "node --test tests/*.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
