@@ -1,4 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import type { AppOutletContext } from '../components/layout/AppLayout';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useStats } from '../hooks/useStats';
 import { LevelProgress } from '../components/profile/LevelProgress';
@@ -10,6 +12,7 @@ import { formatDuration } from '../utils/formatTime';
 import { PageHeader } from '../components/ui/DesignSystem';
 
 export const ProgressPage: React.FC = () => {
+  const { openStreakCalendar } = useOutletContext<AppOutletContext>();
   const { user } = useAuthContext();
   const { stats, loading, error, fetchStats } = useStats();
 
@@ -30,7 +33,7 @@ export const ProgressPage: React.FC = () => {
 
   return (
     <div className="ej-page space-y-7">
-      <PageHeader eyebrow="Evolução" title="Seu esforço, em perspectiva." description="Acompanhe sua consistência e descubra onde cada hora de estudo faz a diferença." />
+      <PageHeader eyebrow="Evolução" title="Seu esforço, em perspectiva." description="Acompanhe sua consistência e descubra onde cada hora de estudo faz a diferença." actions={<button type="button" className="ej-button ej-button-secondary" onClick={openStreakCalendar}>Ver calendário</button>} />
       <div className="social-stat-grid social-stat-grid--four">
         <StatsCard label="Total de horas" value={`${summary.totalHours.toFixed(1)}h`} icon="study" />
         <StatsCard label="Dias estudados" value={summary.totalDaysStudied} icon="seasons" />

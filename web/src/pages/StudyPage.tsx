@@ -24,6 +24,7 @@ import { formatDuration } from '../utils/formatTime';
 import { Badge, Card, Icon, PageHeader, StatCard } from '../components/ui/DesignSystem';
 import { db } from '../firebase/config';
 import type { FinishSessionResult, Season } from '../types';
+import { invalidateStreakCalendar } from '../components/streak/useStreakCalendar';
 import './study-redesign.css';
 
 function getGreeting(name: string): string {
@@ -86,6 +87,7 @@ export const StudyPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(getTodayDateString());
 
   const queueSessionDetails = useCallback((result: FinishSessionResult) => {
+    if (user) invalidateStreakCalendar(user.uid);
     const celebration = result.pointEarnedNow ? result : null;
     if (user) {
       try { sessionStorage.setItem(completionKey(user.uid), JSON.stringify({ sessionId: result.sessionId, celebration })); }
