@@ -43,8 +43,8 @@ export const ProgressPage: React.FC = () => {
       <div className="progress-overview">
         <LevelProgress currentLevel={summary.level.currentLevel} nextLevel={summary.level.nextLevel} requiredSecondsForNext={summary.level.requiredSecondsForNext} progressPercentage={summary.level.progressPercentage} />
         <div className="social-stat-grid">
-          <StatsCard label="Maior sequência" value={`${summary.longestStreak} dias`} icon="bolt" />
-          <StatsCard label="Pontos na temporada" value={summary.seasonPoints} icon="ranking" highlight />
+          <StatsCard label="Maior sequência" value={`${summary.longestStreak} dias`} icon="bolt" highlight />
+          <StatsCard label="Pontos na temporada" value={summary.seasonPoints} icon="ranking" />
         </div>
       </div>
       {user && <SubjectProgress uid={user.uid} />}
