@@ -60,7 +60,7 @@ export const UserProgressPage: React.FC = () => {
         <StatsCard label="Média diária" value={formatDuration(summary.dailyAverageSeconds)} icon="progress" />
         <StatsCard label="Recorde diário" value={formatDuration(summary.maxDaySeconds)} icon="study" highlight />
       </div>
-      <LevelProgress currentLevel={summary.level.currentLevel} nextLevel={summary.level.nextLevel} currentSeconds={summary.level.currentSeconds} requiredSecondsForNext={summary.level.requiredSecondsForNext} progressPercentage={summary.level.progressPercentage} />
+      <LevelProgress currentLevel={summary.level.currentLevel} nextLevel={summary.level.nextLevel} requiredSecondsForNext={summary.level.requiredSecondsForNext} progressPercentage={summary.level.progressPercentage} />
       <div className="social-stat-grid social-stat-grid--four">
         <StatsCard label="Sequência atual" value={`${summary.currentStreak} dias`} icon="bolt" />
         <StatsCard label="Maior sequência" value={`${summary.longestStreak} dias`} icon="bolt" />

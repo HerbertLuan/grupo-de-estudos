@@ -1,16 +1,15 @@
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import type { BadgeConfig, UserBadge } from '../types';
 
 /**
  * Obtém todo o catálogo de medalhas/badges disponíveis na plataforma,
- * ordenadas pelo identificador 'id'.
+ * incluindo documentos antigos que não possuem o campo 'id'.
  */
 export async function getCatalogBadges(): Promise<BadgeConfig[]> {
   try {
     const badgesCol = collection(db, 'badges');
-    const badgesQuery = query(badgesCol, orderBy('id'));
-    const snapshot = await getDocs(badgesQuery);
+    const snapshot = await getDocs(badgesCol);
 
     return snapshot.docs.map((doc) => ({
       ...(doc.data() as BadgeConfig),

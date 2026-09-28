@@ -28,6 +28,19 @@ export async function getUserStats(uid: string): Promise<UserStatsResult> {
     throw new HttpsError('not-found', 'Usuário não encontrado.');
   }
   const user = userSnap.data() as UserProfile;
+  let seasonPoints = 0;
+  if (user.groupId) {
+    const groupRef = db.collection('groups').doc(user.groupId);
+    const groupSnap = await groupRef.get();
+    const activeSeasonId = groupSnap.data()?.activeSeasonId;
+    if (activeSeasonId) {
+      const memberSnap = await groupRef.collection('members').doc(uid).get();
+      const member = memberSnap.data();
+      if (member && member.seasonId === activeSeasonId) {
+        seasonPoints = member.seasonPoints || 0;
+      }
+    }
+  }
 
   const todayStr = getZonedDateString();
   const effectiveStreak = getEffectiveStreak(user.currentStreak, user.lastCompletedDate, todayStr);
@@ -101,7 +114,7 @@ export async function getUserStats(uid: string): Promise<UserStatsResult> {
     currentStreak: effectiveStreak,
     longestStreak: user.longestStreak || 0,
     totalPoints: user.totalPoints || 0,
-    seasonPoints: 0,
+    seasonPoints,
     level: levelInfo,
   };
 

@@ -8,17 +8,24 @@ export function useBadges() {
   const [catalog, setCatalog] = useState<BadgeConfig[]>([]);
   const [earned, setEarned] = useState<UserBadge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchBadges = useCallback(async () => {
     if (!user) return;
     setLoading(true);
+    setError(null);
     try {
-      const [catalogResult, earnedResult] = await Promise.all([
+      const [catalogResult, earnedResult] = await Promise.allSettled([
         getCatalogBadges(),
         getUserBadges(user.uid),
       ]);
-      setCatalog(catalogResult);
-      setEarned(earnedResult);
+      setCatalog(catalogResult.status === 'fulfilled' ? catalogResult.value : []);
+      if (earnedResult.status === 'fulfilled') {
+        setEarned(earnedResult.value);
+      } else {
+        setEarned([]);
+        setError('Não foi possível carregar suas conquistas.');
+      }
     } catch (err) {
       console.error('Error fetching badges:', err);
     } finally {
@@ -36,6 +43,7 @@ export function useBadges() {
     catalog,
     earned,
     loading,
+    error,
     isEarned: (badgeId: string) => earnedIds.has(badgeId),
     refreshBadges: fetchBadges,
   };

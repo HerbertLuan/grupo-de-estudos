@@ -14,8 +14,8 @@ import { Badge, Card, Icon } from '../components/ui/DesignSystem';
 
 export const ProfilePage: React.FC = () => {
   const { user, profile } = useAuthContext();
-  const { stats, loading: statsLoading, fetchStats } = useStats();
-  const { catalog, earned, loading: badgesLoading } = useBadges();
+  const { stats, fetchStats } = useStats();
+  const { catalog, earned, loading: badgesLoading, error: badgesError } = useBadges();
 
   const loadData = useCallback(async () => {
     if (user) await fetchStats(user.uid);
@@ -69,16 +69,16 @@ export const ProfilePage: React.FC = () => {
         <div className="profile-main">
           <section>
             <div className="social-section-title"><div><h2>Seu mural de conquistas</h2><p>Cada marco conta uma parte da sua jornada.</p></div>{!badgesLoading && <Badge tone="yellow">{earned.length} conquistadas</Badge>}</div>
-            {badgesLoading || statsLoading ? <LoadingState message="Carregando conquistas..." /> : (
+            {badgesLoading ? <LoadingState message="Carregando conquistas..." /> : badgesError ? <p role="alert">{badgesError}</p> : earned.length === 0 && catalog.length === 0 ? <p>Suas conquistas aparecerão aqui.</p> : (
               <div className="achievement-grid">
-                {earned.filter(b => b.id.startsWith('season_')).map(b => <article key={b.id} className="achievement-card achievement-card--earned"><div className="achievement-card__symbol" aria-hidden="true">{b.icon}</div><h3>{b.name}</h3><p>{b.description}</p><div className="mt-auto pt-4"><Badge tone="yellow">Temporada</Badge></div></article>)}
-                {catalog.map(badge => <BadgeCard key={badge.id} badge={badge} earned={earnedBadgeIds.has(badge.id)} earnedDate={earnedDateMap[badge.id]} />)}
+                {earned.map(b => <article key={b.id} className="achievement-card achievement-card--earned"><div className="achievement-card__symbol" aria-hidden="true">{b.icon}</div><h3>{b.name}</h3><p>{b.description}</p><div className="mt-auto pt-4"><Badge tone="yellow">{b.id.startsWith('season_') ? 'Temporada' : 'Conquistada'}</Badge></div>{earnedDateMap[b.badgeId] && <span className="mt-2 text-xs text-text-secondary">{earnedDateMap[b.badgeId]}</span>}</article>)}
+                {catalog.filter(badge => !earnedBadgeIds.has(badge.id)).map(badge => <BadgeCard key={badge.id} badge={badge} earned={false} />)}
               </div>
             )}
           </section>
         </div>
         <aside className="profile-aside" aria-label="Evolução do estudante">
-          <LevelProgress currentLevel={currentLevel} nextLevel={nextLevel} currentSeconds={profile.totalStudySeconds} requiredSecondsForNext={requiredSecondsForNext} progressPercentage={progressPercentage} />
+          <LevelProgress currentLevel={currentLevel} nextLevel={nextLevel} requiredSecondsForNext={requiredSecondsForNext} progressPercentage={progressPercentage} />
           {stats && <div className="social-stat-grid"><StatsCard label="Média diária" value={formatDuration(stats.summary.dailyAverageSeconds)} icon="progress" /><StatsCard label="Recorde diário" value={formatDuration(stats.summary.maxDaySeconds)} icon="study" /></div>}
           <Card className="p-5"><p className="social-eyebrow">Continue evoluindo</p><p className="text-sm leading-relaxed text-text-secondary">Veja como seu tempo e suas matérias se transformam em progresso.</p><Link className="social-link mt-3" to="/progress">Explorar meu progresso <Icon name="arrow" size={16} /></Link></Card>
           <div className="profile-note"><p>Disciplina hoje.<br /><strong className="text-text-primary">Conquistas amanhã.</strong></p></div>
